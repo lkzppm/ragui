@@ -1,6 +1,6 @@
 # 02 — The RAG pipeline
 
-The core of the project: every stage between a document and the prompt, as a pure function in `src/lib/rag/`. Status on 2026-11-10: **no stage is built** (the types, the settings object and the stage list exist: `01-architecture.md`, "As scaffolded"); the stages and the formulas are Decided as the scope, every default value is Proposed and has to be tuned on a real corpus.
+The core of the project: every stage between a document and the prompt, as a pure function in `src/lib/rag/`. Status on 2026-11-10: **every stage is built and was run** on the contract, in Node (`pnpm rag`) and in a browser. "Measured" at the end has the numbers; where a stage was built differently from its description below, "As built" says how.
 
 Each stage below lists what it computes, its knobs, and what it gives the interface to show. The views are in `03-ui-design.md`.
 
@@ -190,16 +190,56 @@ For each question, run the query pipeline and find the rank of the first chunk w
 
 ## Running it without a browser
 
-The functions must run under `tsx` too (`@huggingface/transformers` works in Node), so a stage can be tried in the terminal, as `pnpm judge` did for Debait:
+The functions run under `tsx` too, on the sample sandbox, so a stage can be tried in the terminal, as `pnpm judge` did for Debait (built 2026-11-10; the first run downloads the model, about 100 seconds):
 
 ```
-pnpm rag ingest <file> [--size 800 --overlap 120]     # prints the ingestion trace
-pnpm rag ask '<question>' [--mode hybrid --k 8]       # prints the query trace, no model call
+pnpm rag ingest                                       # the indexing trace and every chunk
+pnpm rag eval                                         # the sandbox's test questions: ranks, recall, MRR
+pnpm rag ask '<question>'                             # the query trace, no model call
 pnpm rag ask '<question>' --answer                    # also calls Groq
-pnpm rag eval                                         # the four questions on the contract: ranks, recall@k, MRR
+pnpm rag figure                                       # rewrites the landing page's figure from real runs
+# options: --strategy --size --overlap --mode --k --lambda --sources --budget --threshold (a number, or off)
 ```
 
 Because the core is pure, it is the natural place for unit tests with fixed inputs and expected rankings (Proposed: `vitest` on `src/lib/rag/` only; Debait shipped without tests, so this is Lucas's call).
+
+## As built (2026-11-10)
+
+- **Headings** (`isHeading`): a Markdown `#` line, or a line of at most 90 characters in capitals that ends with a colon or has two words or more. One bare capitalised word is not a heading: at the foot of the contract, "LOCADOR" under a signature would otherwise open a section holding the tenant's name.
+- **Sentences**: a unit ends at ". ", "? " or "! ", or at a line break after ending punctuation or before a list item. The dot of "1." at the start of a line does not end one.
+- **Clean** also turns runs of four or more `_ - = . *` into three (signature lines) and removes zero-width characters. It does not rejoin words hyphenated across lines: "substituí-lo" is a real hyphen, and telling the two apart needs a dictionary.
+- **Hard-wrapped lines are kept in the text and softened only on screen**: the document view shows a line break inside a paragraph as a space. One character for one, so offsets hold.
+- **What is embedded and indexed** for a chunk is its heading, a line break and its text, unless the text already starts with the heading (`chunkInput`).
+- **Tokens** everywhere are the embedder's count (XLM-R SentencePiece), which is a real count but not the answering model's; the prompt's true size comes back from Groq with the answer and both are shown.
+- **MMR's relevance** is the candidate's place in the fused ranking scaled to 0..1 (first is 1), not its fused score: reciprocal-rank scores of neighbours differ by a percent or two and could not be weighed against a cosine. It picks `context.sources` chunks; a candidate that ranked above a kept one and was passed over is reported as dropped, with the chunk it was too close to.
+- **Both searches always run**, whatever the mode, so the two rankings can be compared on screen; the mode decides which ones are fused.
+- **The gate** reads the best cosine over every chunk, in any mode.
+- **Assemble** merges chunks of one document that touch or overlap into one source and charges only the text a chunk adds.
+- **Citations**: `openai/gpt-oss-120b` writes `【4】` whatever the prompt says. `normalizeCitations` rewrites those as `[4]` before the text is shown or checked. Do not remove it because the prompt "already asks for square brackets".
+- **Verify** lists sentences without a citation only when the answer cites something; an answer with no citation at all is how "the documents do not say" looks, and is not flagged sentence by sentence.
+
+## Measured (2026-11-10)
+
+Embedding model `Xenova/multilingual-e5-small`, `q8`. The contract cleans to 3,825 characters.
+
+**The same code gives different vectors in Node and in the browser.** `onnxruntime-node` and the WASM runtime disagree in the third decimal of a cosine, which is enough to swap neighbours: at 400 characters the passage with the landlord's name was 4th in the fused list in Node and 5th in Chrome. So "deterministic" holds per runtime (the same browser gives the same result every time), not across them, and `pnpm rag eval` is a guide to what the lab will do, not a proof. Tune in the browser.
+
+Chunking by headings, hybrid search, k 8, λ 0.7, at most 4 sources in 500 tokens, in headless Chromium:
+
+| Size / overlap | Chunks | Landlord's name | Tenant's CPF | Address | Rent | In context |
+|---|---|---|---|---|---|---|
+| 400 / 60 | 14 | dense 6, words 5, fused **5** | 3, 2, 1 | 2, 2, 1 | 1, 2, 1 | 3 of 4 |
+| **300 / 40** (the sample's setting) | 21 | 6, 4, **3** | 8, 2, 1 | 2, 3, 1 | 1, 2, 1 | **4 of 4** |
+| 250 / 40 | 25 | 8, 7, 3 | 8, 2, 3 | 8, 7, **6** | 1, 2, 1 | 3 of 4 |
+| 600 / 60 | 14 | 6, 5, 5 | 3, 2, 1 | 2, 2, 1 | 1, 2, 1 | 3 of 4 |
+
+At 400 / 60: 5 sources passes all four; dense only and words only each fail the landlord's name (fused 6 and 5); λ at 0.5 or 1 and k at 14 change nothing; `recursive` passes all four, `fixed` fails the landlord's name (fused 8).
+
+What this says about the document: the hard question is the first one. "nome" occurs nowhere in the contract and "locador" in 8 of 14 passages, so neither search puts the LOCADOR block near the top; only the two together bring it into a context of four. The tenant's CPF is the reverse case: dense search alone ranks the LOCATÁRIA block 3rd to 8th, the word "cpf" ranks it 2nd.
+
+**End to end** with `openai/gpt-oss-120b` on Groq, the sample's settings: all four questions answered correctly, each citing the passage that holds the answer, in 465 to 1,483 ms, 527 to 676 tokens in and 24 to 63 out.
+
+**The gate**, best cosine per question at 300 / 40 in the browser: the four questions and three more the contract answers, 0.873 to 0.908; "Who is the landlord?" (English, about the contract) 0.828; "Qual o nome do fiador?" (the contract has no guarantor) 0.815; four unrelated questions 0.788 to 0.839. No threshold separates them all. The sample is set to **0.82**: it stops "Qual a capital da França?" (0.792) and lets every question about the contract through, the English one included; it also lets "Quanto custa um carro novo?" (0.839) through, which the model then declines. A gate is a cheap filter for the obviously unrelated, not a judge of answerability. A new sandbox starts with it off.
 
 ## Later, not in the first version
 

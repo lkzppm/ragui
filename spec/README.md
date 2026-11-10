@@ -13,7 +13,7 @@ Short, stable documents so any session (human or Claude Code) can pick up the wo
 
 ## Status legend
 
-The spec was written on 2026-11-10, before any code, revised the same day once the assignment was read, and again when the app was scaffolded. No pipeline stage is built yet. Every claim carries one of these:
+The spec was written on 2026-11-10, before any code, and revised the same day as the assignment was read, the app scaffolded and the pipeline, the lab and the landing page built. Where a file has an "As built" or "Measured" section, that is what the code does and what was observed; the text before it is the design it started from. Every claim carries one of these:
 
 - **Decided**: chosen by Lucas or forced by a fact; build it this way unless a new fact appears.
 - **Proposed**: a default worth starting from, chosen by Claude; change freely and record why.

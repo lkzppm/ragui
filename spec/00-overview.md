@@ -54,7 +54,7 @@ This is the product. The assignment's contract is one thing made with it, not wh
 - **A person makes as many as they want**, each about its own subject, and they stay in that person's browser.
 - **The contract is the sample sandbox** that ships with the app, so a first visit has something to run, and so the assignment is answered by the same thing everyone else uses.
 - **Nothing in the pipeline or the interface may assume the contract.** Its file, its four questions and its language live in one preset (`src/lib/sandbox/presets.ts`). Defaults sized for it are that sandbox's settings, not constants.
-- **Taking a sandbox out** (Proposed): export it as a file with its settings, test questions and instructions, and import it elsewhere. What "deploy" should mean beyond that, for example a shareable link or a standalone page that only answers, is an open question (`05-roadmap.md`).
+- **"Deploy" means the app itself** (Lucas, 2026-11-10): "a live tool/showcase deployed in vercel". The thing that goes live is RAGui, open to visitors, with the sample sandbox ready to run and their own documents welcome. Taking one sandbox out as a file (settings, test questions, instructions) remains an idea, not a requirement.
 
 ## The idea
 

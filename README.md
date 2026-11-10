@@ -4,7 +4,7 @@ A sandbox for building a RAG about anything, where the pipeline is the interface
 
 A UFRJ course project (Inteligência Artificial, 2026/2): the "Busca Semântica" part of the final assignment, which asks for a RAG that answers four questions about a residential lease contract. RAGui does that, and takes any other document too.
 
-> **Status (2026-11-10): scaffold.** The app runs and shows the pipeline as it is defined, in Portuguese and English, light and dark. No stage computes anything yet. The plan is in [`spec/`](spec/README.md).
+> **Status (2026-11-10): works locally, not deployed yet.** The sample sandbox (a residential lease and four questions about it) indexes in the browser and answers with citations. Saving your own sandboxes is next. Details in [`spec/05-roadmap.md`](spec/05-roadmap.md).
 
 ## Run it
 
@@ -12,7 +12,19 @@ Node.js 24 and pnpm.
 
 ```bash
 pnpm install
-pnpm dev        # http://localhost:3000, no configuration needed
+cp .env.example .env    # add a free Groq key: https://console.groq.com/keys
+pnpm dev                # http://localhost:3000
+```
+
+Without a key everything up to the prompt still works: documents are read, cut, embedded and searched in your browser, and the lab shows the exact prompt that would be sent. The first visit downloads the embedding model (about 118 MB), which the browser then keeps.
+
+Open `/lab`, click one of the test questions on the left, and watch the run. Then change the chunk size or the search mode and see which answers are still found.
+
+The same pipeline runs in the terminal:
+
+```bash
+pnpm rag eval                              # are the sample's four answers retrieved?
+pnpm rag ask 'Qual o valor do aluguel?' --answer
 ```
 
 ## The idea in three lines
@@ -23,7 +35,7 @@ pnpm dev        # http://localhost:3000, no configuration needed
 
 ## Stack
 
-In place: Next.js 16, React 19, Tailwind 4, shadcn/ui, Motion, Geist. Planned: Transformers.js for embeddings in a Web Worker, the Vercel AI SDK with Groq for generation, Vercel for hosting.
+Next.js 16 and React 19 · Transformers.js (`multilingual-e5-small`) in a Web Worker for embeddings · the Vercel AI SDK with Groq for the answer · WebGPU through [vgpu](https://vgpu.sh) for the landing page · Tailwind 4, Motion, Geist. No vector database and no retrieval framework: the retrieval is the code in [`src/lib/rag`](src/lib/rag).
 
 ## Read more
 
