@@ -42,6 +42,14 @@ The centre of the lab during a query. Three linked parts; hovering a chunk in on
 
 Hover any hit to see **the score broken down**: for dense, the two vector strips one over the other and the strip of their products, with the sum; for sparse, the matched terms with each one's contribution.
 
+### What the assignment's document changes (2026-11-10)
+
+The contract yields about 15 to 20 chunks, not hundreds. That shifts the weight between the three parts:
+
+- **The map is sparse**, so each point can be a labelled, clickable node (its clause title beside it) instead of an anonymous dot, and plain SVG is enough. Canvas only matters once someone drops in a long document.
+- **The ranking race and the score breakdown carry the demo.** With so few candidates every card fits on screen, and the interesting moments are the decoys: the landlord's address ranking next to the property's, the deposit of R$ 6.400,00 next to the rent. Give them room.
+- **A test panel** sits beside the Retriever when the contract is the corpus: the statement's four questions, each with the rank of the chunk that holds its answer (dense, sparse, fused) and a mark for "in the context". It recomputes on every setting change, with no model call (`02-rag-pipeline.md`, "The four questions as a test"). Clicking a question runs it.
+
 ### Supporting views
 
 - **Chunk view** (inspector for chunk): the document's text with chunk boundaries as brackets in the margin and overlaps shaded; moving the size and overlap sliders re-cuts it live.
@@ -54,7 +62,7 @@ Hover any hit to see **the score broken down**: for dense, the two vector strips
 
 ### Landing `/`
 
-As in Debait and GraphMan: the name, one sentence, and a figure that explains. The figure is a small `<Pipeline>` and embedding map replaying a real, precomputed trace of the sample corpus in a loop that the visitor can pause. One button into the lab. No marketing phrases; every number in the figure comes from the trace.
+As in Debait and GraphMan: the name, one sentence, and a figure that explains. The figure is a small `<Pipeline>` and embedding map replaying a real, precomputed trace of one of the four questions on the contract in a loop that the visitor can pause. One button into the lab. No marketing phrases; every number in the figure comes from the trace.
 
 ### Lab `/lab`
 
@@ -73,7 +81,7 @@ As in Debait and GraphMan: the name, one sentence, and a figure that explains. T
 ```
 
 - The bottom bar is the question field and the transport (step back, play or pause, step forward, a scrubber over the trace, speed 0.5× 1× 2× and "instant").
-- First visit: the sample corpus is already indexed (or is being indexed, which is the first thing the visitor watches) and three example questions are offered, one of them with no answer in the corpus to show the gate.
+- First visit: the assignment's contract is already indexed (or is being indexed, which is the first thing the visitor watches). The statement's four questions are offered as examples, plus one the contract cannot answer ("Qual o nome do fiador?") to show what happens then.
 - The first load of the embedding model is a visible state of the embed stage with its progress in megabytes, not a spinner over the page.
 - Phone: one column; the panels become tabs (corpus, pipeline, retriever, answer); the map stays usable by touch. Carry over the lessons from CV-AI and Debait: 16px inputs so iOS Safari does not zoom, `interactiveWidget: "resizes-content"`.
 

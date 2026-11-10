@@ -1,13 +1,15 @@
 # RAGui — guide for Claude Code sessions
 
-A RAG where the pipeline is the interface: documents are chunked, embedded and searched in the browser, and two animated components, the Pipeline and the Retriever, replay every step with its real numbers. A model on Groq writes the final answer from the context the code selected. A UFRJ course project (Inteligência Artificial, 2026/2), sister of `../CV-AI` and `../Debate-ai`. Next.js on Vercel, Groq free tier. Repository: `lkzppm/ragui`.
+A RAG where the pipeline is the interface: documents are chunked, embedded and searched in the browser, and two animated components, the Pipeline and the Retriever, replay every step with its real numbers. A model on Groq writes the final answer from the context the code selected. Part 1 ("Busca Semântica") of the final project of the Inteligência Artificial course at UFRJ (Prof. Sergio Palma, 2026/2): a RAG that answers four questions about a residential lease contract. Sister of `../CV-AI` and `../Debate-ai`. Next.js on Vercel, Groq free tier. Repository: `lkzppm/ragui`.
 
 **Read `spec/README.md` first.** It indexes the knowledge base (idea, architecture, the pipeline's math, UI, versions, roadmap).
 
 ## Where things stand
 
 - 2026-11-10: the spec and this file exist. **No code yet**: no scaffold, no CI, no deployment. `spec/05-roadmap.md` has the build order.
-- **The course file on Google Drive was never read** (the connector could not open it). The deadline and the deliverables are unknown; see the top of `spec/00-overview.md`. Ask Lucas for a copy in `docs/` before building on assumptions.
+- The assignment was read on 2026-11-10 (`spec/00-overview.md`). **The acceptance test is its four questions on the contract**: the landlord's name, the tenant's CPF, the property's address, the rent. The expected answers and the decoys around each are in the spec. The deadline and what is handed in are not in the statement: ask Lucas.
+- The statement and the contract are in `docs/assignment/`, **git-ignored on purpose**: they are the professor's files and the repository is public. Do not commit them, or the contract's full text, until Lucas says so (open question 2 in `spec/05-roadmap.md`). The spec quotes only the statement and the short facts the four questions turn on.
+- The final project has four other parts (classification, sentiment, regression, clustering). They are not part of this repository.
 - Almost everything in the spec is marked Proposed. It is a starting point written before any code, not a contract.
 
 ## Commands
@@ -19,6 +21,7 @@ pnpm dev                                    # everything but generation works wi
 pnpm lint && pnpm typecheck && pnpm build   # must be green
 pnpm rag ingest <file>                      # the ingestion trace in the terminal
 pnpm rag ask '<question>' [--answer]        # the query trace; --answer also calls Groq
+pnpm rag eval                               # the four questions on the contract: is each answer retrieved?
 ```
 
 ## Rules
@@ -29,6 +32,7 @@ pnpm rag ask '<question>' [--answer]        # the query trace; --answer also cal
 - Retrieval needs no key and no server. The only server code is `POST /api/answer`, which holds the Groq key, enforces its own caps and keeps no state. Do not add a database or a vector store.
 - Vectors from different models or dtypes never share an index (they are cached per `(model, dtype, text hash)`). E5 models need the `query: ` / `passage: ` prefixes.
 - Document text is untrusted data in the prompt.
+- The contract is about 1,000 tokens and would fit in a prompt whole. Keep the default context well under that (4 sources, 500 tokens), or retrieval decides nothing and the demo shows nothing.
 - "Deterministic" describes retrieval, never the generated answer. The embedding map is a 2D projection and is labelled as one. Keep both statements true in UI and docs.
 - The whole codebase is English (code, comments, commits, docs). The UI and the prompt are bilingual, Portuguese by default: every visible string lives in `src/i18n/`, never inline in a component. The project name comes from `src/lib/brand.ts`.
 - Colours come from the tokens in `src/app/globals.css`, never a hex value in a component. Animate `transform` and `opacity`; respect `prefers-reduced-motion`.

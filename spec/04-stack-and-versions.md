@@ -48,7 +48,7 @@ From https://console.groq.com/docs/models:
 
 From https://console.groq.com/docs/rate-limits: `openai/gpt-oss-120b` and `openai/gpt-oss-20b` at 30 requests/min, 1,000 requests/day, **8,000 tokens/min, 200,000 tokens/day**, per model. Debait observed the same numbers on the free tier on 2026-10-06. The real limits of the key are on its account page.
 
-What that means here: one answer is about 1,800 tokens of context, 300 of prompt and question and up to 600 of output, so roughly 2,700 tokens. That is about three answers a minute and seventy a day on one model. Hence the default context budget, the gate that skips the call, and the fact that retrieval costs nothing.
+What that means here: with the defaults set for the assignment's contract, one answer is about 500 tokens of context, 300 of prompt and question and up to 400 of output (the four answers are one line each), so roughly 1,200 tokens: about six answers a minute and 160 a day on one model. A larger corpus with a 1,800-token context costs about 2,700 an answer, three a minute and seventy a day. Hence the gate that skips the call, and the fact that retrieval costs nothing.
 
 Proposed default: `openai/gpt-oss-120b`, as in the sister projects. `llama-3.3-70b-versatile` is the alternative if reasoning tokens get in the way.
 
@@ -59,6 +59,7 @@ pnpm dev                                    # no configuration needed: everythin
 pnpm lint && pnpm typecheck && pnpm build   # must be green (CI enforces)
 pnpm rag ingest <file>                      # the ingestion trace in the terminal
 pnpm rag ask '<question>' [--answer]        # the query trace; --answer also calls Groq
+pnpm rag eval                               # the statement's four questions on the contract
 ```
 
 ## Repository and deployment
