@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# course material from the professor: local only until Lucas decides to publish it
+/docs/assignment/
