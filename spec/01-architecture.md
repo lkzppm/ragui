@@ -1,6 +1,6 @@
 # 01 — Architecture
 
-Status on 2026-11-10: **nothing built**. Everything here is Proposed unless marked Decided.
+Status on 2026-11-10: **the scaffold exists** (the app's skeleton, the types of the trace, the stage list, the sample sandbox; see "As scaffolded" at the end). No pipeline code yet. Everything here is Proposed unless marked Decided.
 
 ## What runs where
 
@@ -64,7 +64,7 @@ All in the browser, in IndexedDB (documents and vectors are too large for `local
 | `documents` | `docId` (hash of the content) | name, type, clean text, size, added at |
 | `chunks` | `chunkId` | docId, start and end offsets, text, token count, the settings that produced it |
 | `vectors` | `(modelId, dtype, textHash)` | `Float32Array(384)`, L2-normalised |
-| `corpora` | id | a named set of documents with its settings (one corpus at first; several is an idea) |
+| `sandboxes` | id | a named RAG: its document ids, its settings, its test questions, its instructions (`Sandbox` in `src/lib/sandbox/types.ts`). The sample one is built into the code and is not stored |
 
 - **Ids are content hashes**, never counters or random values, so the same input gives the same ids on any machine and a trace can be compared between runs. `chunkId = hash(docId, start, end)`.
 - **Vectors are cached by the text they embed**, per model and dtype. Changing the chunk size re-embeds only the chunks whose text is new, and the embed step reports how many came from the cache.
@@ -96,13 +96,16 @@ src/
       rrf.ts  mmr.ts  gate.ts  assemble.ts
       prompt.ts  verify.ts  project.ts (PCA)
       run-ingest.ts  run-query.ts            compose the steps, return a Trace
-      golden.ts  eval.ts                     the statement's four questions, graded by code
+      settings.ts  stages.ts                 every knob in one object; the stages as data
+      eval.ts                                a sandbox's test questions, graded by code
     embed/
       worker.ts  client.ts  models.ts        transformers.js behind one async function
+    sandbox/                                 the Sandbox type and the bundled sample (presets.ts)
     store/                                   IndexedDB + the zustand lab store
-    brand.ts  utils.ts
+    brand.ts  utils.ts  use-theme.ts
   components/
     pipeline/                                the stage rail and its packets
+    lab/                                     the lab page: panels, the stage inspector, the sandbox switcher
     retriever/                               embedding map, ranking race, fusion, context tray
     corpus/                                  drop zone, document list, chunk view, vector strip
     answer/                                  streamed answer, citations, prompt inspector
@@ -125,3 +128,18 @@ spec/  docs/
 | 2026-11-10 | One stateless route, no database | Fits Vercel's free plan; nothing to operate |
 | 2026-11-10 | The assignment's contract is the preloaded corpus and its four questions a golden set graded by code | The statement fixes both; it gives retrieval a pass or fail that needs no model |
 | 2026-11-10 | The default context is smaller than the document | The contract fits in a prompt whole; otherwise retrieval would decide nothing |
+| 2026-11-10 | The unit of the app is a sandbox; the contract is a preset | Lucas: generic use, "like a sandbox". Keeps everything about the assignment in one file |
+| 2026-11-10 | All settings in one plain object owned by the sandbox (`Settings`) | The pipeline reads nothing else, so a sandbox can be exported and a run reproduced |
+| 2026-11-10 | The stages are data (`STAGES`, `RAIL` in `stages.ts`) | The rail, the inspector and later the replay read one list; a stage is added in one place |
+
+## As scaffolded (2026-11-10)
+
+What exists in `src/`, all of it running:
+
+- `app/`: the root layout (Geist fonts, the theme script, the language provider, the top bar and the footer), `/` (the landing page), `/lab` (the lab's skeleton), the not-found page, the icon.
+- `lib/rag/types.ts`: the trace (`Step`, `IngestTrace`, `QueryTrace`, `Playhead`) and the records it refers to. `settings.ts`: `Settings` and `DEFAULT_SETTINGS`. `stages.ts`: the 14 stages with their formula and the settings each one reads, and the layout of the rail.
+- `lib/sandbox/`: `Sandbox`, `GoldenQuestion`, and the `lease` preset with the contract and the statement's four questions.
+- `i18n/`: the provider and both dictionaries. `pt.tsx` is typed against `en.tsx`.
+- `components/pipeline/pipeline-rail.tsx`: the rail, drawn from `RAIL`, at rest. `components/lab/`: the lab page, the panel and the stage inspector. `components/site/`: the top bar, the footer, the language and theme switches, the logo. `components/ui/button.tsx`: from the shadcn CLI.
+
+What does not exist: any function of the pipeline, the embedder, the store, the route, the transport, the Retriever. The lab says so on screen.

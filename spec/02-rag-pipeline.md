@@ -1,6 +1,6 @@
 # 02 — The RAG pipeline
 
-The core of the project: every stage between a document and the prompt, as a pure function in `src/lib/rag/`. Status on 2026-11-10: **nothing built**; the stages and the formulas are Decided as the scope, every default value is Proposed and has to be tuned on a real corpus.
+The core of the project: every stage between a document and the prompt, as a pure function in `src/lib/rag/`. Status on 2026-11-10: **no stage is built** (the types, the settings object and the stage list exist: `01-architecture.md`, "As scaffolded"); the stages and the formulas are Decided as the scope, every default value is Proposed and has to be tuned on a real corpus.
 
 Each stage below lists what it computes, its knobs, and what it gives the interface to show. The views are in `03-ui-design.md`.
 
@@ -162,25 +162,25 @@ Code reads the answer after it is complete:
 - a sentence with no citation is marked **unsupported** (except the "the sources do not say" answer);
 - for each cited sentence, the share of its content words that occur in the cited source is shown as a rough support score. It is a lexical check, labelled as such: it catches a citation pasted onto an unrelated sentence, not a subtle misreading.
 
-## The four questions as a test
+## Test questions
 
-The statement gives four questions and the contract gives their answers, so retrieval can be graded by code, with no model and no judgement:
+A sandbox carries a list of questions with known answers (`Sandbox.golden`), and retrieval is graded against it by code, with no model and no judgement. Anyone can write such a list for their own documents; it is how they find out whether their settings work. The sample sandbox ships with the statement's four (`src/lib/sandbox/presets.ts`):
 
 ```ts
-const golden = [
-  { q: "Qual o nome do Locador",    expect: "Carlos Henrique de Almeida", near: "LOCADOR" },
-  { q: "Qual o CPF do Locatário",   expect: "987.654.321-00" },
-  { q: "Qual o endereço do imóvel", expect: "Rua Hermengarda, nº 812" },
-  { q: "Qual o valor do aluguel",   expect: "R$ 3.200,00" },
-];
+golden: [
+  { id: "landlord",   question: "Qual o nome do Locador?",    expect: "Carlos Henrique de Almeida", near: "LOCADOR" },
+  { id: "tenant-cpf", question: "Qual o CPF do Locatário?",   expect: "987.654.321-00" },
+  { id: "address",    question: "Qual o endereço do imóvel?", expect: "Rua Hermengarda, nº 812" },
+  { id: "rent",       question: "Qual o valor do aluguel?",   expect: "R$ 3.200,00" },
+]
 ```
 
 For each question, run the query pipeline and find the rank of the first chunk whose text contains `expect` (for the first one, the chunk that also contains `near`, since the name appears three times). Report per question: that rank in the dense list, in the sparse list, after fusion, and whether the chunk made it into the context. Over the four: recall@k and the mean reciprocal rank.
 
-- This is the same thing `pnpm rag eval` prints in the terminal and a small panel shows in the lab, recomputed whenever a setting changes. It turns "which chunk size is better" into four numbers.
-- It is also the unit test that matters: with the default settings, all four answers are in the context.
-- The list lives in `src/lib/rag/golden.ts`, next to the sample corpus. It is specific to the contract; a user's own documents have no golden set, and the panel hides.
-- It grades retrieval only. Whether the model then writes the right sentence is read by a person, four times.
+- This is the same thing `pnpm rag eval` prints in the terminal and a panel shows in the lab, recomputed whenever a setting changes. It turns "which chunk size is better" into a few numbers.
+- For the sample sandbox it is also the unit test that matters: with its settings, all four answers are in the context.
+- In a sandbox of the user's own, the panel starts empty and offers to add a question and the text its answer must contain. `expect` is matched after the same cleaning the documents get, so an accent or a line break does not fail a correct retrieval.
+- It grades retrieval only. Whether the model then writes the right sentence is read by a person.
 
 ## What "deterministic" means here
 
@@ -203,7 +203,7 @@ Because the core is pure, it is the natural place for unit tests with fixed inpu
 
 ## Later, not in the first version
 
-Query rewriting and HyDE (a model call before retrieval, which breaks principle 1 unless shown as an optional, labelled stage); a cross-encoder reranker in the worker; a Portuguese stemmer for the sparse branch; a golden set the user can write for their own documents; token-exact chunking; quantised vectors.
+Query rewriting and HyDE (a model call before retrieval, which breaks principle 1 unless shown as an optional, labelled stage); a cross-encoder reranker in the worker; a Portuguese stemmer for the sparse branch; token-exact chunking; quantised vectors.
 
 ## References
 

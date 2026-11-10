@@ -41,5 +41,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# course material from the professor: local only until Lucas decides to publish it
+# the assignment statement (.doc): local only. The contract itself is published in public/samples/
 /docs/assignment/

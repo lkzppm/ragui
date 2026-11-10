@@ -1,10 +1,19 @@
 # RAGui
 
-A RAG where the pipeline is the interface. Documents are chunked, embedded and searched in the browser, and two animated components, the Pipeline and the Retriever, replay every step with its real numbers: where a chunk was cut, what its vector looks like, why it ranked third, what fit in the prompt. A model on [Groq](https://groq.com) writes the final answer from the context the code selected.
+A sandbox for building a RAG about anything, where the pipeline is the interface. Documents are chunked, embedded and searched in the browser, and two animated components, the Pipeline and the Retriever, replay every step with its real numbers: where a chunk was cut, what its vector looks like, why it ranked third, what fit in the prompt. A model on [Groq](https://groq.com) writes the final answer from the context the code selected.
 
 A UFRJ course project (Inteligência Artificial, 2026/2): the "Busca Semântica" part of the final assignment, which asks for a RAG that answers four questions about a residential lease contract. RAGui does that, and takes any other document too.
 
-> **Status (2026-11-10): design only.** There is no code yet. The plan is in [`spec/`](spec/README.md).
+> **Status (2026-11-10): scaffold.** The app runs and shows the pipeline as it is defined, in Portuguese and English, light and dark. No stage computes anything yet. The plan is in [`spec/`](spec/README.md).
+
+## Run it
+
+Node.js 24 and pnpm.
+
+```bash
+pnpm install
+pnpm dev        # http://localhost:3000, no configuration needed
+```
 
 ## The idea in three lines
 
@@ -12,9 +21,9 @@ A UFRJ course project (Inteligência Artificial, 2026/2): the "Busca Semântica"
 2. **The animation is the data.** Each run produces a trace of its steps; the interface replays it with a play, pause and step control. Nothing moves that was not computed.
 3. **Retrieval needs no key and no server.** The embedding model runs in the browser. The deployment is one route that streams the answer.
 
-## Planned stack
+## Stack
 
-Next.js (latest) on Vercel · Vercel AI SDK with Groq for generation · Transformers.js for embeddings in a Web Worker · Tailwind, shadcn/ui and Motion for the interface.
+In place: Next.js 16, React 19, Tailwind 4, shadcn/ui, Motion, Geist. Planned: Transformers.js for embeddings in a Web Worker, the Vercel AI SDK with Groq for generation, Vercel for hosting.
 
 ## Read more
 
