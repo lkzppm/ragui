@@ -1,0 +1,35 @@
+import {
+  BadgeCheck,
+  Binary,
+  CopyMinus,
+  Database,
+  DoorOpen,
+  Eraser,
+  FileUp,
+  GitMerge,
+  MessageCircleQuestionMark,
+  Package,
+  PenLine,
+  Radar,
+  Scissors,
+  TextSearch,
+  type LucideIcon,
+} from "lucide-react";
+import type { StageId } from "@/lib/rag/types";
+
+export const STAGE_ICONS: Record<StageId, LucideIcon> = {
+  load: FileUp,
+  clean: Eraser,
+  chunk: Scissors,
+  embed: Binary,
+  index: Database,
+  query: MessageCircleQuestionMark,
+  dense: Radar,
+  sparse: TextSearch,
+  fuse: GitMerge,
+  diversify: CopyMinus,
+  gate: DoorOpen,
+  assemble: Package,
+  generate: PenLine,
+  verify: BadgeCheck,
+};
