@@ -17,19 +17,19 @@ Status on 2026-11-10: **scaffolded.** `package.json` is the source of truth for 
 | lucide-react, simple-icons | 1.70.0 / 16.37.0 | interface icons, the GitHub glyph |
 | typescript / eslint | **5.9.3 / 9.39.5, pinned** | TypeScript 7 and ESLint 10 exist; the sister projects' toolchain was never tried with them. `eslint-config-next` is 16.4.5 |
 
-## Not installed yet, on purpose
+## Added with the pipeline (2026-11-10)
 
-Each is added by the step that first imports it, so nothing sits unused (Debait ended with four such packages).
-
-| Package | Latest on 2026-11-10 | Needed for |
+| Package | Version | Note |
 |---|---|---|
-| @huggingface/transformers | 4.3.2 | the embedder, in a Web Worker. New to this family of projects: nobody here has run v4 |
-| unpdf | 2.1.0 | PDF text in the browser. CV-AI used 1.8: check what changed in 2.x |
-| zustand | 5.1.0 | the lab store, as in CV-AI |
-| ai, @ai-sdk/groq | 7.0.166 / 4.0.78 | AI SDK 7: `streamText` for the answer. Check the `.d.ts` before using a remembered API |
-| zod | 4.6.7 | the route's body schema |
-| tsx | | the terminal scripts (`pnpm rag`) |
-| vgpu | 0.6.0 | only if the map moves to WebGPU (`03-ui-design.md`) |
+| @huggingface/transformers | 4.3.2 | the embedder. Runs in a Web Worker under Next 16 with Turbopack with no extra configuration, in development and in the production build; and in Node under `tsx`. Loaded with a dynamic import |
+| unpdf | 2.1.0 | PDF text, in the browser and in Node. On the contract it gives one line per printed line, bullets as U+F0B7 |
+| zustand | 5.1.0 | the lab's store |
+| ai, @ai-sdk/groq | 7.0.166 / 4.0.78 | `streamText` with `instructions` (`system` is deprecated in 7), `fullStream` parts are `{ type: "text-delta", text }` and `{ type: "error", error }` |
+| zod | 4.6.7 | the route's body |
+| vgpu, @vgpu/wgsl, @vgpu/wgsl-std | **0.5.0**, pinned | the landing page's background. 0.6.0 exists; 0.5.0 is what the sister projects run and what the code was written against. `@webgpu/types` 0.1.74 |
+| tsx | 4.23.15 | `pnpm rag` |
+
+`pnpm-workspace.yaml` allows one install script (`esbuild`, for `tsx`) and refuses the rest, `onnxruntime-node` included: its binaries for macOS come in the package, and on Linux the script would download GPU libraries CI and Vercel have no use for. Nothing on the server imports it.
 
 Not needed at all: a vector database, LangChain or LlamaIndex (the point is to write and show the retrieval ourselves), a second model provider, Redis.
 
@@ -37,14 +37,11 @@ Not needed at all: a vector database, LangChain or LlamaIndex (the point is to w
 
 Not with `create-next-app`: `tsconfig.json`, `postcss.config.mjs`, `components.json`, `vercel.json` and `eslint.config.mjs` were copied from `../Debate-ai`, `pnpm-workspace.yaml` and the CI workflow adapted from it (no shader step), and the dependencies added with `pnpm add`. The language provider and the theme hook are Debait's with new storage keys (`ragui.locale`, `ragui.theme`). `next dev` wrote `AGENTS.md`, which `CLAUDE.md` imports on its first line. To add a shadcn component: `pnpm dlx shadcn@latest add <name>` (never hand-edit `src/components/ui`).
 
-Two things to verify early because they are new here:
-
-1. `@huggingface/transformers` in a Web Worker under Next 16 with Turbopack: the worker bundle, the WASM files, and that the package is never pulled into the server bundle.
-2. The same package under `tsx` in Node for the terminal scripts.
+Both things that were new here worked on 2026-11-10: `@huggingface/transformers` in a Web Worker under Next 16 with Turbopack (`new Worker(new URL("./worker.ts", import.meta.url), { type: "module" })`), and the same package under `tsx`. The ONNX runtime's WASM files and the model come from jsDelivr and Hugging Face at run time, so a first visit needs both reachable.
 
 ## Environment variables (`.env.example`)
 
-None is read yet: nothing on the server exists. They are listed for the generation step.
+Read by the answer route and by `pnpm rag ask --answer`, from `.env` or `.env.local` (both git-ignored). Lucas's `.env` has a key since 2026-11-10.
 
 ```
 GROQ_API_KEY=                 # https://console.groq.com/keys (free tier). Missing → generation is off, retrieval still works
@@ -68,24 +65,23 @@ Proposed default: `openai/gpt-oss-120b`, as in the sister projects. `llama-3.3-7
 ## Commands
 
 ```
-pnpm dev                                    # no configuration needed
+pnpm dev                                    # the whole app; generation needs GROQ_API_KEY in .env
 pnpm lint && pnpm typecheck && pnpm build   # what CI runs (typecheck = next typegen + tsc)
-```
-
-Planned, not written yet:
-
-```
-pnpm rag ingest <file>                      # the ingestion trace in the terminal
+pnpm exec vgpu check src/components/field/field.wgsl   # and points.wgsl, links.wgsl
+pnpm rag ingest                             # the indexing trace and every chunk of the sample
+pnpm rag eval                               # its test questions: ranks, recall, MRR
 pnpm rag ask '<question>' [--answer]        # the query trace; --answer also calls Groq
-pnpm rag eval                               # a sandbox's test questions: is each answer retrieved?
+pnpm rag figure                             # rewrites the landing page's figure from real runs
 ```
 
-To look at a page without a browser window, as was done for the scaffold: the headless Chromium that Playwright keeps in `~/Library/Caches/ms-playwright/` takes `--screenshot=<file> --window-size=<w>,<h> <url>`; `--blink-settings=preferredColorScheme=0` asks for the dark theme. Port 3000 may be taken by another project on Lucas's machine, in which case `next dev` moves to the next free one and says so.
+In development the lab's store is on `window.lab` (`window.lab.getState().ask("…", "pt")`, `.update({ chunk: { size: 300 } })`, `.tests`).
+
+**Driving it without a browser window.** Playwright's headless Chromium sits in `~/Library/Caches/ms-playwright/`. Started with `--remote-debugging-port`, it is driven over the DevTools protocol with Node's own `WebSocket`: navigate, evaluate script, wait for a condition, capture a screenshot. That is how everything in `03-ui-design.md` under "Seen" was looked at. WebGPU needs `--enable-unsafe-webgpu --enable-features=Vulkan,WebGPU --use-angle=metal`; without them `requestAdapter()` returns null and the landing page shows its still frame, which is itself worth checking. Ports 3000 and 3111 are taken by other projects on Lucas's machine: start with `PORT=<free port> pnpm dev`.
 
 ## Repository and deployment
 
 - **Repository**: `lkzppm/ragui`, public, created on 2026-11-10. Branches `main` ← `dev` ← `feat/*` or `fix/*`; commit with `/commit`, integrate with `/merge`.
-- **CI** (`.github/workflows/ci.yml`): lint, typecheck and build on pushes and pull requests to `main` and `dev`, Node 24, one job named `lint · types · build`.
+- **CI** (`.github/workflows/ci.yml`): lint, typecheck, the three shaders through `vgpu check`, and build, on pushes and pull requests to `main` and `dev`, Node 24, one job named `lint · types · build`.
 - **Branch rules** (set on 2026-11-10, copied from Debait): a ruleset on `main` requires a pull request and the `lint · types · build` check, and blocks deletion and force pushes; one on `dev` requires the check and blocks deletion and force pushes. Auto-merge and delete-branch-on-merge are on, so `/merge` arms auto-merge and the merge lands when CI is green, and a merged feature branch is removed on GitHub. The two pull requests before the scaffold were merged by hand: there was no CI then, and the `/merge` helper script stops when a repository reports no checks at all.
 - **Vercel**: not created. Production will track `main`; every pull request gets a preview. In Debait the Vercel MCP connection was read-only on the team and the CLI did the work (`vercel project add`, `vercel link`, `vercel git connect`, `vercel env add`).
 

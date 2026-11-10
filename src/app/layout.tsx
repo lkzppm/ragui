@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
-import { Footer } from "@/components/site/footer";
 import { Nav } from "@/components/site/nav";
 import LocaleProvider from "@/i18n/LocaleProvider";
 import { BRAND } from "@/lib/brand";
@@ -33,11 +32,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className="flex min-h-full flex-col font-sans">
+      <body className="min-h-full font-sans">
         <LocaleProvider>
           <Nav />
-          <div className="flex-1">{children}</div>
-          <Footer />
+          {children}
         </LocaleProvider>
       </body>
     </html>

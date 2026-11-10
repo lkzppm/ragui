@@ -1,6 +1,6 @@
 # 03 — UI and design
 
-Status on 2026-11-10: **Proposed. The skeleton is built ("As scaffolded" below); the Pipeline's motion and the Retriever are not. Nothing has been seen by Lucas.** The only fixed inputs are his words: "clean and modern", and "I want the rag pipeline and the retriever to be strong animated UI components, so the user sees what is happening in the rag". In CV-AI and Debait the first visual direction was rejected and redone, so build the two main components on plain tokens first and expect the look to change.
+Status on 2026-11-10: **built ("As built" below), following three directions Lucas gave that day: the home on a vgpu background, the home and lab structured like GenWallet's, and everything animated the way Apple's fluid-interface guidance describes. Seen by Claude in headless Chromium only; not yet seen by Lucas.** The sections before "As built" are the earlier design; the built interface follows them except where "As built" says otherwise. The only fixed inputs are his words: "clean and modern", and "I want the rag pipeline and the retriever to be strong animated UI components, so the user sees what is happening in the rag". In CV-AI and Debait the first visual direction was rejected and redone, so build the two main components on plain tokens first and expect the look to change.
 
 ## Design idea
 
@@ -95,21 +95,71 @@ The lab always shows one sandbox; a switcher in its header lists the others and 
 - `prefers-reduced-motion`: the playhead jumps from step to step and the views crossfade; packets, flights and the growing ring are off. Everything stays readable with no motion at all.
 - The projector case matters (this will be shown in a classroom): at large zoom the current stage, its number and the top hits must be readable from the back of a room.
 
-## As scaffolded (2026-11-10)
+## As built (2026-11-10)
 
-A first, deliberately plain pass, to be changed by Lucas:
+### Directions from Lucas (2026-11-10)
 
-- **Tokens** (`src/app/globals.css`): a warm off-white page and near-black text in light, the reverse in dark; `--query` indigo (`#4f46e5` / `#8b8cf9`), `--corpus` slate, `--flag` amber; 8px radius; hairline borders. Geist Sans and Geist Mono from the `geist` package (no download at build time). The `eyebrow` and `num` utilities.
-- **Top bar**: the mark and wordmark ("RAG" plain, "ui" in the query colour), the lab link, GitHub, the language switch (a sliding thumb), the theme button. One row at every width.
-- **The mark**: a filled dot with a ring among four small dots, a question and the search around it, among passages. Also the favicon.
-- **Landing**: the name, one sentence, the button into the lab, the rail as a still figure, three short statements of the principles.
-- **Lab**: the sandbox's name and description, a dashed notice that nothing runs yet, the rail, then three columns: documents, the stage inspector, the test questions. One column on a phone.
-- **The rail is two rows**, indexing above and the question below: the 13 columns do not fit one row at 1280px. Each stage is a chip with its number, icon and name; the selected one has a border in the query colour that slides between chips. Dense and keyword search are stacked in one column. On a phone each row scrolls sideways. There are no edges with packets yet, only hairlines.
-- **The stage inspector**: the stage's position ("7 of 14"), a tag saying whether code or the model does it, what it does in two sentences, the expression it computes, and the settings it reads with their current values. When the pipeline runs, each stage's own view replaces the description.
-- **Seen by Claude** in headless Chromium on 2026-11-10: `/lab` at 1440px and 390px in light, at 1280px in dark; `/` at 1440px in light. In Portuguese only (the English dictionary is type-checked against the same shape but was not looked at on screen). Not seen: any real browser, a real phone, the theme and language switches being clicked.
+> "make a vgpu home, for the structure pattern of home + lab follow the pattern of ../GenWallet/. I want everything well animated, smooth transitions and stunning, /apple-design"
+
+### Motion and material
+
+- **Springs, critically damped by default** (`src/lib/motion.ts`: `SPRING` 0.4 s, `SPRING_FAST`, `SPRING_SLOW`, and `SPRING_DROP` with a little bounce for things that land: the question on the map, a source in the tray, a number on a row). A spring starts from where the element is, so changing a setting mid-animation never jumps.
+- **Press feedback on pointer-down** (`press` utility: scale to 0.97 in 80 ms), on everything clickable.
+- **Glass for floating chrome** (`glass` utility: the top bar, tooltips, the drop target, the hero's buttons): translucent with blur and saturation, content scrolling under it. Scroll areas fade at their edges (`fade-y`, `fade-x`) instead of being cut by a line.
+- **Type**: large headings use the `display` utility (tracking −0.035em, leading 1.02); body tracking is untouched.
+- **One highlight per thing that moves between places**: the rail's "now" marker slides from stage to stage (shared layout), the language switch's thumb slides, rows reorder with layout springs.
+- **The three preferences are honoured in CSS**: reduced motion (nothing slides or loops; the landing background becomes one still frame), reduced transparency (glass becomes solid), more contrast (visible borders).
+
+### Home `/`, three screens (GenWallet's pattern)
+
+1. **Hero on the embedding field** (`components/field/`, WebGPU through vgpu 0.5): a toy space of 132 passages in seven clusters. The pointer is the question; each frame the six nearest are found on the CPU (the same exact search as the lab, in two dimensions) and lines go to them; a click sends a ring outward that lights each point as it passes, in order of distance. One fullscreen effect (the ground, the glow, the ring, the question's dot) and two instanced draws (links, points). With no pointer the question wanders a slow closed path. Without WebGPU, with reduced motion, or if the adapter is refused: one still frame on a 2D canvas. Over it: the mark and name, one sentence, the way into the lab, the source, the stack.
+2. **How it works** on a tint: the claim, four numbers read from the code (14 stages, 13 of them code, 384 dimensions, 0 servers for retrieval), and a figure of **real runs**: the sample's four test questions, each as its three rankings with the passage that holds the answer marked. `pnpm rag figure` writes its data (`site/figure-data.json`) by running the pipeline. The questions turn every 8 s, a segment filling for the current one; the pointer pauses it.
+3. **Built to be inspected** on a field of dots: the headline, four things the lab lets you do, the way in.
+
+The footer is on this page only.
+
+### Lab `/lab`, one fixed screen from `lg` up
+
+Nothing scrolls the page; each panel scrolls inside itself. No footer.
+
+```
+┌ top bar ────────────────────────────────────────────────────────────────────┐
+├──────────┬──────────────────────────────────────────────────────────────────┤
+│ Sidebar  │ Rail: INDEXING  load ─ clean ─ chunk ─ embed ─ index             │
+│ 17.5rem  │       QUESTION  question ═ dense/words ═ fuse ─ … ─ verify       │
+│          ├───────────────────────────────────────────────┬──────────────────┤
+│ sandbox  │ Stage: which stage, what it does, ms          │ Answer   20rem   │
+│ tests    │ ┌ corpus view (indexing) ───────────────────┐ │ text + citations │
+│ chunking │ │ document with passages │ passages+vectors │ │ checks by code   │
+│ retrieval│ └ or retriever view (a question) ───────────┘ │ sources sent     │
+│ context  │ │ map │ by meaning │ by words │ together    │ │ the prompt       │
+│ documents│ │ context tray / closed gate                │ │                  │
+│          ├───────────────────────────────────────────────┴──────────────────┤
+│          │ examples · question field · ◀ ▶/❚❚ ▶ · scrubber · 0.5× 1× 2× ⚡  │
+└──────────┴──────────────────────────────────────────────────────────────────┘
+```
+
+- **Rail** (`pipeline/pipeline-rail.tsx`): the highlight slides to the running stage; each connector fills in the last fifth of the slot before it, with one bright cell at its front; a finished stage keeps one number (chunks, `21×384`, the best cosine, tokens of context, citations checked). Skipped stages are struck through (everything after a closed gate); a search the mode does not use is dashed. Clicking a stage moves the run to it.
+- **Stage header**: the current slot's stage or stages, the code/model tag, the time the step really took, two lines on what it does, and its formula from `2xl` up.
+- **Corpus view**: the document with each passage tinted in turn as the chunking plays, overlaps darker and underlined; beside it the passages as cards that gain their vector strip (384 cells in two rows, the question's colour for positive, the corpus colour for negative) as the embedding plays. Pointing at a passage on one side lights and scrolls it on the other. A pill at the foot gives the stage's fact (characters kept; embedded against cached; vectors and distinct words).
+- **Retriever view**: the map (PCA; the question drops in, every point takes the strength of its real similarity, lines are drawn in rank order, keyword hits wear a dashed square, kept sources get their number, hover shows the passage and its score); three lists that fill as each search plays (the question's words as chips, absent ones struck, rarer ones stronger); the fused list marks kept, dropped ("too close to #n") and beyond; the tray fills with blocks sized by tokens against the budget, with what did not fit beside it. A closed gate replaces the tray with the score, the threshold and "the model was not called".
+- **Answer panel**: held back until the replay reaches generation, then follows the stream; citations are chips that light their source on the map, in the lists and in the tray; under it the checks, the sources sent, token usage and time, and the prompt exactly as sent. States: retrieving, writing, not called (gate), generation off (no key), error by kind, and "written for an earlier context" with a button to write it again.
+- **Bottom bar**: the sandbox's test questions and examples as chips; the question field (`/` focuses it); step back, play/pause/replay, step forward (space and the arrow keys), a scrubber over the whole run, and the speed (⚡ is instant).
+- **Sidebar**: five groups, one open at a time, each showing its current value when closed: test questions (pass or fail with the three ranks; clicking one asks it), chunking, retrieval (mode, k, λ, the gate's threshold or off), context (sources, budget, order), documents (add by button or by dropping files anywhere on the sidebar). A button restores the sandbox's own settings once something differs.
+- **Phone**: the same parts stacked, the page scrolls, the bottom bar sticks.
+
+### What the earlier design asked for and is not there
+
+- Packets as separate squares travelling the edges (one bright cell per connector instead), stale stages dimmed after a setting change (the run is recomputed at once instead), a growing ring on the map (points light by true similarity instead, which is what a ring was standing in for), the dense score broken down per dimension, a sandbox switcher, and a `reduced motion` path for the lab's replay beyond what CSS and the ⚡ speed give.
+
+### Seen, and not
+
+Seen by Claude on 2026-11-10 in headless Chromium, driven through the DevTools protocol: the landing page's three screens (light) and hero (dark), with WebGPU on (the field animating, following a synthetic pointer, a ring after a click) and off (the still frame); the lab at 1440 and 1280 px in both themes, in Portuguese and English, through indexing, a question, a closed gate, stepping back, a slider change; and at 390 px. Clicks on the language switch, the theme button, a test question, the step button and a sidebar group were made on the real controls.
+
+Not seen: any real browser or phone, a real pointer or touch, a file being dropped, Safari or Firefox (where WebGPU and the worker may behave differently), a first visit downloading the 118 MB model in the browser (the test browser already had it), and how any of it feels in motion. **Lucas has not seen it.**
 
 ## Not decided
 
-- The accent colour and the exact palette (the scaffold's are placeholders).
+- The accent colour and the exact palette (indigo `--query`, slate `--corpus`, amber `--flag` on near-monochrome are still the first pass).
 - Whether the map is drawn with canvas 2D or with `vgpu` (WebGPU), which the sister projects use. Canvas 2D is enough for thousands of points; `vgpu` only earns its place if the map gets effects that need a shader.
 - A logo or mark.

@@ -1,6 +1,6 @@
 # 01 — Architecture
 
-Status on 2026-11-10: **the scaffold exists** (the app's skeleton, the types of the trace, the stage list, the sample sandbox; see "As scaffolded" at the end). No pipeline code yet. Everything here is Proposed unless marked Decided.
+Status on 2026-11-10: **built and running locally**: every stage of the pipeline, the embedder in a Web Worker, the answer route, the lab that replays a run, and the landing page ("As built" at the end). Not built: saving sandboxes (documents added by a visitor live in memory until the tab closes), and a deployment. What is described before "As built" is the design; where the code went another way, "As built" says so.
 
 ## What runs where
 
@@ -132,14 +132,43 @@ spec/  docs/
 | 2026-11-10 | All settings in one plain object owned by the sandbox (`Settings`) | The pipeline reads nothing else, so a sandbox can be exported and a run reproduced |
 | 2026-11-10 | The stages are data (`STAGES`, `RAIL` in `stages.ts`) | The rail, the inspector and later the replay read one list; a stage is added in one place |
 
-## As scaffolded (2026-11-10)
+## As built (2026-11-10)
 
-What exists in `src/`, all of it running:
+### The pipeline (`src/lib/rag/`, pure)
 
-- `app/`: the root layout (Geist fonts, the theme script, the language provider, the top bar and the footer), `/` (the landing page), `/lab` (the lab's skeleton), the not-found page, the icon.
-- `lib/rag/types.ts`: the trace (`Step`, `IngestTrace`, `QueryTrace`, `Playhead`) and the records it refers to. `settings.ts`: `Settings` and `DEFAULT_SETTINGS`. `stages.ts`: the 14 stages with their formula and the settings each one reads, and the layout of the rail.
-- `lib/sandbox/`: `Sandbox`, `GoldenQuestion`, and the `lease` preset with the contract and the statement's four questions.
-- `i18n/`: the provider and both dictionaries. `pt.tsx` is typed against `en.tsx`.
-- `components/pipeline/pipeline-rail.tsx`: the rail, drawn from `RAIL`, at rest. `components/lab/`: the lab page, the panel and the stage inspector. `components/site/`: the top bar, the footer, the language and theme switches, the logo. `components/ui/button.tsx`: from the shadcn CLI.
+- `types.ts`: the trace and everything it refers to. Ingest steps are aggregated over the documents (one `load`, one `clean`, one `chunk`), not one per document as first sketched. `Runtime` hands the functions what they may not have themselves: the embedder, a clock and the vector cache.
+- `clean.ts`, `chunk.ts`, `tokenize.ts`, `bm25.ts`, `dense.ts`, `rrf.ts`, `mmr.ts`, `assemble.ts`, `prompt.ts`, `verify.ts`, `project.ts` (PCA), `eval.ts` (grades a query against a test question), `hash.ts`, `similarity.ts`.
+- `run-ingest.ts` and `run-query.ts` compose them and return the trace. The query trace ends at `assemble` (or at `gate` when it closes); the lab appends `generate` and `verify` once the answer has arrived.
+- `settings.ts`: `Settings`, `DEFAULT_SETTINGS` (where a new sandbox starts) and `RANGES` (what each control may be set to). `stages.ts`: the 14 stages and the rail's 13 slots.
 
-What does not exist: any function of the pipeline, the embedder, the store, the route, the transport, the Retriever. The lab says so on screen.
+### Around it
+
+- `src/lib/embed/`: `core.ts` (load the model, embed, count tokens; shared), `worker.ts` + `browser.ts` (the Web Worker and its promise-based client), `node.ts` (the same model in-process for the scripts), `models.ts` (dimensions, token limits, the E5 prefixes).
+- `src/lib/load/pdf.ts`: text out of a PDF with `unpdf`, in the browser and in Node.
+- `src/lib/answer/`: `groq.ts` (the one model call, server only), `protocol.ts` (what the route streams: the text, then U+001E, then one JSON object with the model, the token usage and why it stopped, or the error).
+- `src/app/api/answer/route.ts`: `GET` says whether generation is available and with which model; `POST` validates with zod, builds the prompt with `buildPrompt` and streams. Generation settings are the server's, never the client's.
+- `src/lib/sandbox/`: `Sandbox`, and the `lease` preset with its measured settings, the statement's four questions and three more examples.
+- `scripts/rag.mts`: `pnpm rag ingest | eval | ask | figure`.
+
+### The replay (`src/lib/store/`)
+
+- `playhead.ts`: `cursor`, a motion value, is a position along the 13 slots (a slot's number plus how far into it). It is the only animation state.
+- `lab.ts` (zustand): the sandbox, its documents and index, both traces, the answer, the test results, and the transport (`limit` is how far the cursor may go: nothing beyond it has been computed). `startPlayback()` is the frame loop that moves the cursor toward the limit at the chosen speed.
+- `use-cursor.ts`: `useCursor` derives a number or a boolean from the cursor and re-renders only when it changes (`useSyncExternalStore`); `useRevealed(slot, total)` is "how many of these rows has this stage shown so far". Views are built from these two.
+- Indexing is followed live (the limit rises as each step completes, so no stage is shown before it has happened, and each is on screen for at least its slot's time). A question is computed at once (milliseconds) and then replayed; the model is called in parallel, and the cursor waits inside the generate slot until the stream ends.
+- A setting that changes the chunks re-indexes after the control rests for 280 ms; vectors are cached by text, so only new passages are embedded. Any other setting re-runs the search on the spot. Either way the tests are graded again and an answer already on screen is marked as written for an earlier context instead of being silently replaced.
+
+### Interface
+
+`components/pipeline/` (the rail), `components/lab/` (the screen, the sidebar, the stage, the answer panel, the bottom bar), `components/corpus/` (the document with its passages, vector strips), `components/retriever/` (the map, the three rankings, the context tray), `components/field/` (the landing page's WebGPU background), `components/site/` (top bar, footer, landing page and its figure). `03-ui-design.md` describes them.
+
+### Decisions made while building
+
+| Date | Decision | Why |
+|---|---|---|
+| 2026-11-10 | Ingest steps aggregated over documents | The rail shows one number per stage; per-document steps added nothing on screen |
+| 2026-11-10 | The cursor is a motion value outside React; views subscribe to derived values | The cursor changes every frame; a count of revealed rows changes a few times a second |
+| 2026-11-10 | The model is called as soon as the context is known, not when the replay reaches that stage | The replay then hides the network wait instead of adding to it |
+| 2026-11-10 | The test questions run with the gate off | They grade retrieval; a threshold set too high would hide what the search found |
+| 2026-11-10 | Generation settings live on the server | A public route must not let a client raise the output limit or change the model |
+| 2026-11-10 | Dependencies load lazily (`@huggingface/transformers` and `unpdf` behind dynamic imports) | Neither is in the landing page's bundle or in the server's |
