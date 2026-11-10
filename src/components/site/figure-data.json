@@ -1,0 +1,471 @@
+{
+  "model": "Xenova/multilingual-e5-small",
+  "chunks": 21,
+  "sources": 4,
+  "runs": [
+    {
+      "id": "landlord",
+      "question": "Qual o nome do Locador?",
+      "expect": "Carlos Henrique de Almeida",
+      "dense": [
+        {
+          "chunk": 4,
+          "title": "CLÁUSULA 1 – DO IMÓVEL",
+          "score": 0.868,
+          "holder": false
+        },
+        {
+          "chunk": 11,
+          "title": "CLÁUSULA 5 – DOS ENCARGOS",
+          "score": 0.8629,
+          "holder": false
+        },
+        {
+          "chunk": 0,
+          "title": "CONTRATO DE LOCAÇÃO RESIDENCIAL",
+          "score": 0.8538,
+          "holder": false
+        },
+        {
+          "chunk": 17,
+          "title": "CLÁUSULA 9 – DAS OBRIGAÇÕES DO LOCADOR",
+          "score": 0.8525,
+          "holder": false
+        },
+        {
+          "chunk": 3,
+          "title": "LOCATÁRIA",
+          "score": 0.8453,
+          "holder": false
+        }
+      ],
+      "sparse": [
+        {
+          "chunk": 17,
+          "title": "CLÁUSULA 9 – DAS OBRIGAÇÕES DO LOCADOR",
+          "score": 1.5992,
+          "holder": false
+        },
+        {
+          "chunk": 7,
+          "title": "CLÁUSULA 2 – DO OBJETO",
+          "score": 1.4897,
+          "holder": false
+        },
+        {
+          "chunk": 12,
+          "title": "CLÁUSULA 5 – DOS ENCARGOS",
+          "score": 1.4155,
+          "holder": false
+        },
+        {
+          "chunk": 20,
+          "title": "CLÁUSULA 11 – DO FORO",
+          "score": 1.3733,
+          "holder": true
+        },
+        {
+          "chunk": 18,
+          "title": "CLÁUSULA 10 – DA RESCISÃO",
+          "score": 1.2564,
+          "holder": false
+        }
+      ],
+      "fused": [
+        {
+          "chunk": 17,
+          "title": "CLÁUSULA 9 – DAS OBRIGAÇÕES DO LOCADOR",
+          "score": 0.032,
+          "holder": false,
+          "denseRank": 4,
+          "sparseRank": 1,
+          "kept": true
+        },
+        {
+          "chunk": 4,
+          "title": "CLÁUSULA 1 – DO IMÓVEL",
+          "score": 0.0315,
+          "holder": false,
+          "denseRank": 1,
+          "sparseRank": 6,
+          "kept": true
+        },
+        {
+          "chunk": 20,
+          "title": "CLÁUSULA 11 – DO FORO",
+          "score": 0.0303,
+          "holder": true,
+          "denseRank": 8,
+          "sparseRank": 4,
+          "kept": true
+        },
+        {
+          "chunk": 1,
+          "title": "LOCADOR",
+          "score": 0.0299,
+          "holder": true,
+          "denseRank": 7,
+          "sparseRank": 7,
+          "kept": true
+        },
+        {
+          "chunk": 7,
+          "title": "CLÁUSULA 2 – DO OBJETO",
+          "score": 0.0161,
+          "holder": false,
+          "denseRank": null,
+          "sparseRank": 2,
+          "kept": false
+        }
+      ]
+    },
+    {
+      "id": "tenant-cpf",
+      "question": "Qual o CPF do Locatário?",
+      "expect": "987.654.321-00",
+      "dense": [
+        {
+          "chunk": 11,
+          "title": "CLÁUSULA 5 – DOS ENCARGOS",
+          "score": 0.8814,
+          "holder": false
+        },
+        {
+          "chunk": 0,
+          "title": "CONTRATO DE LOCAÇÃO RESIDENCIAL",
+          "score": 0.8752,
+          "holder": false
+        },
+        {
+          "chunk": 17,
+          "title": "CLÁUSULA 9 – DAS OBRIGAÇÕES DO LOCADOR",
+          "score": 0.8591,
+          "holder": false
+        },
+        {
+          "chunk": 15,
+          "title": "CLÁUSULA 8 – DAS OBRIGAÇÕES DA LOCATÁRIA",
+          "score": 0.8535,
+          "holder": false
+        },
+        {
+          "chunk": 4,
+          "title": "CLÁUSULA 1 – DO IMÓVEL",
+          "score": 0.8532,
+          "holder": false
+        }
+      ],
+      "sparse": [
+        {
+          "chunk": 1,
+          "title": "LOCADOR",
+          "score": 2.1343,
+          "holder": false
+        },
+        {
+          "chunk": 2,
+          "title": "LOCATÁRIA",
+          "score": 2.1343,
+          "holder": true
+        },
+        {
+          "chunk": 7,
+          "title": "CLÁUSULA 2 – DO OBJETO",
+          "score": 0.4689,
+          "holder": false
+        },
+        {
+          "chunk": 10,
+          "title": "CLÁUSULA 4 – DO VALOR DO ALUGUEL",
+          "score": 0.4647,
+          "holder": false
+        },
+        {
+          "chunk": 18,
+          "title": "CLÁUSULA 10 – DA RESCISÃO",
+          "score": 0.4214,
+          "holder": false
+        }
+      ],
+      "fused": [
+        {
+          "chunk": 2,
+          "title": "LOCATÁRIA",
+          "score": 0.0313,
+          "holder": true,
+          "denseRank": 6,
+          "sparseRank": 2,
+          "kept": true
+        },
+        {
+          "chunk": 17,
+          "title": "CLÁUSULA 9 – DAS OBRIGAÇÕES DO LOCADOR",
+          "score": 0.0306,
+          "holder": false,
+          "denseRank": 3,
+          "sparseRank": 8,
+          "kept": true
+        },
+        {
+          "chunk": 1,
+          "title": "LOCADOR",
+          "score": 0.0164,
+          "holder": false,
+          "denseRank": null,
+          "sparseRank": 1,
+          "kept": true
+        },
+        {
+          "chunk": 11,
+          "title": "CLÁUSULA 5 – DOS ENCARGOS",
+          "score": 0.0164,
+          "holder": false,
+          "denseRank": 1,
+          "sparseRank": null,
+          "kept": true
+        },
+        {
+          "chunk": 0,
+          "title": "CONTRATO DE LOCAÇÃO RESIDENCIAL",
+          "score": 0.0161,
+          "holder": false,
+          "denseRank": 2,
+          "sparseRank": null,
+          "kept": false
+        }
+      ]
+    },
+    {
+      "id": "address",
+      "question": "Qual o endereço do imóvel?",
+      "expect": "Rua Hermengarda, nº 812",
+      "dense": [
+        {
+          "chunk": 0,
+          "title": "CONTRATO DE LOCAÇÃO RESIDENCIAL",
+          "score": 0.8716,
+          "holder": false
+        },
+        {
+          "chunk": 7,
+          "title": "CLÁUSULA 2 – DO OBJETO",
+          "score": 0.8684,
+          "holder": false
+        },
+        {
+          "chunk": 4,
+          "title": "CLÁUSULA 1 – DO IMÓVEL",
+          "score": 0.8652,
+          "holder": true
+        },
+        {
+          "chunk": 5,
+          "title": "CLÁUSULA 1 – DO IMÓVEL",
+          "score": 0.8613,
+          "holder": false
+        },
+        {
+          "chunk": 16,
+          "title": "CLÁUSULA 8 – DAS OBRIGAÇÕES DA LOCATÁRIA",
+          "score": 0.8605,
+          "holder": false
+        }
+      ],
+      "sparse": [
+        {
+          "chunk": 5,
+          "title": "CLÁUSULA 1 – DO IMÓVEL",
+          "score": 2.0005,
+          "holder": false
+        },
+        {
+          "chunk": 17,
+          "title": "CLÁUSULA 9 – DAS OBRIGAÇÕES DO LOCADOR",
+          "score": 1.7608,
+          "holder": false
+        },
+        {
+          "chunk": 4,
+          "title": "CLÁUSULA 1 – DO IMÓVEL",
+          "score": 1.6805,
+          "holder": true
+        },
+        {
+          "chunk": 7,
+          "title": "CLÁUSULA 2 – DO OBJETO",
+          "score": 1.624,
+          "holder": false
+        },
+        {
+          "chunk": 6,
+          "title": "CLÁUSULA 2 – DO OBJETO",
+          "score": 1.5478,
+          "holder": false
+        }
+      ],
+      "fused": [
+        {
+          "chunk": 5,
+          "title": "CLÁUSULA 1 – DO IMÓVEL",
+          "score": 0.032,
+          "holder": false,
+          "denseRank": 4,
+          "sparseRank": 1,
+          "kept": true
+        },
+        {
+          "chunk": 7,
+          "title": "CLÁUSULA 2 – DO OBJETO",
+          "score": 0.0318,
+          "holder": false,
+          "denseRank": 2,
+          "sparseRank": 4,
+          "kept": true
+        },
+        {
+          "chunk": 4,
+          "title": "CLÁUSULA 1 – DO IMÓVEL",
+          "score": 0.0317,
+          "holder": true,
+          "denseRank": 3,
+          "sparseRank": 3,
+          "kept": true
+        },
+        {
+          "chunk": 17,
+          "title": "CLÁUSULA 9 – DAS OBRIGAÇÕES DO LOCADOR",
+          "score": 0.0313,
+          "holder": false,
+          "denseRank": 6,
+          "sparseRank": 2,
+          "kept": true
+        },
+        {
+          "chunk": 16,
+          "title": "CLÁUSULA 8 – DAS OBRIGAÇÕES DA LOCATÁRIA",
+          "score": 0.0305,
+          "holder": false,
+          "denseRank": 5,
+          "sparseRank": 6,
+          "kept": false
+        }
+      ]
+    },
+    {
+      "id": "rent",
+      "question": "Qual o valor do aluguel?",
+      "expect": "R$ 3.200,00",
+      "dense": [
+        {
+          "chunk": 9,
+          "title": "CLÁUSULA 4 – DO VALOR DO ALUGUEL",
+          "score": 0.9035,
+          "holder": true
+        },
+        {
+          "chunk": 11,
+          "title": "CLÁUSULA 5 – DOS ENCARGOS",
+          "score": 0.9007,
+          "holder": false
+        },
+        {
+          "chunk": 14,
+          "title": "CLÁUSULA 7 – DA GARANTIA LOCATÍCIA",
+          "score": 0.8877,
+          "holder": false
+        },
+        {
+          "chunk": 0,
+          "title": "CONTRATO DE LOCAÇÃO RESIDENCIAL",
+          "score": 0.8749,
+          "holder": false
+        },
+        {
+          "chunk": 10,
+          "title": "CLÁUSULA 4 – DO VALOR DO ALUGUEL",
+          "score": 0.8741,
+          "holder": false
+        }
+      ],
+      "sparse": [
+        {
+          "chunk": 10,
+          "title": "CLÁUSULA 4 – DO VALOR DO ALUGUEL",
+          "score": 4.5805,
+          "holder": false
+        },
+        {
+          "chunk": 9,
+          "title": "CLÁUSULA 4 – DO VALOR DO ALUGUEL",
+          "score": 3.6358,
+          "holder": true
+        },
+        {
+          "chunk": 14,
+          "title": "CLÁUSULA 7 – DA GARANTIA LOCATÍCIA",
+          "score": 3.4875,
+          "holder": false
+        },
+        {
+          "chunk": 13,
+          "title": "CLÁUSULA 6 – DO REAJUSTE",
+          "score": 2.022,
+          "holder": false
+        },
+        {
+          "chunk": 11,
+          "title": "CLÁUSULA 5 – DOS ENCARGOS",
+          "score": 1.6404,
+          "holder": false
+        }
+      ],
+      "fused": [
+        {
+          "chunk": 9,
+          "title": "CLÁUSULA 4 – DO VALOR DO ALUGUEL",
+          "score": 0.0325,
+          "holder": true,
+          "denseRank": 1,
+          "sparseRank": 2,
+          "kept": true
+        },
+        {
+          "chunk": 10,
+          "title": "CLÁUSULA 4 – DO VALOR DO ALUGUEL",
+          "score": 0.0318,
+          "holder": false,
+          "denseRank": 5,
+          "sparseRank": 1,
+          "kept": true
+        },
+        {
+          "chunk": 14,
+          "title": "CLÁUSULA 7 – DA GARANTIA LOCATÍCIA",
+          "score": 0.0317,
+          "holder": false,
+          "denseRank": 3,
+          "sparseRank": 3,
+          "kept": true
+        },
+        {
+          "chunk": 11,
+          "title": "CLÁUSULA 5 – DOS ENCARGOS",
+          "score": 0.0315,
+          "holder": false,
+          "denseRank": 2,
+          "sparseRank": 5,
+          "kept": true
+        },
+        {
+          "chunk": 13,
+          "title": "CLÁUSULA 6 – DO REAJUSTE",
+          "score": 0.0308,
+          "holder": false,
+          "denseRank": 6,
+          "sparseRank": 4,
+          "kept": false
+        }
+      ]
+    }
+  ]
+}

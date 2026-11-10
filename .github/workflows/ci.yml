@@ -40,5 +40,11 @@ jobs:
       - name: Types
         run: pnpm typecheck
 
+      - name: Shaders
+        run: |
+          pnpm exec vgpu check src/components/field/field.wgsl > /dev/null
+          pnpm exec vgpu check src/components/field/points.wgsl > /dev/null
+          pnpm exec vgpu check src/components/field/links.wgsl > /dev/null
+
       - name: Build
         run: pnpm build
