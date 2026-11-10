@@ -18,9 +18,9 @@ The document to search is `CONTRATO DE LOCAÇÃO RESIDENCIAL.pdf`: a residential
 
 The other four parts are classic machine learning on four CSV files and are **not part of this repository**: data classification (three models compared by ROC curve), sentiment analysis of reviews (two methods, accuracy, F1 and confusion matrix), multiple linear regression (apartment prices in Méier), and clustering (hierarchical with a dendrogram, then K-Means). Where they are done is Lucas's call (`05-roadmap.md`).
 
-**What the statement does not say**: a deadline, what is handed in (code, report, presentation), or any required tool, language or model. Those are still unknown.
+**What the statement does not say**: a deadline, what is handed in (code, report, presentation), or any required tool, language or model. Lucas, 2026-11-10: **the delivery is in about a month**, so around 2026-12-10; the exact date and what is handed in are still to be confirmed.
 
-Local copies of the statement and the contract are in `docs/assignment/`, which is git-ignored: the files are the professor's, the repository is public, and publishing them is Lucas's decision.
+The contract is in the repository at `public/samples/contrato-locacao-residencial.pdf` (Lucas approved publishing it on 2026-11-10); the app serves it as its bundled sample. The statement itself stays local in `docs/assignment/`, which is git-ignored.
 
 ### The four questions are the acceptance test
 
@@ -44,6 +44,18 @@ Each one has a wrong answer sitting close by in the same document, which is what
 - **Clean and modern** style.
 - **Next.js, latest version**, deployed on **Vercel**, generation by a model on **Groq** with an API key.
 
+## A sandbox for any subject (Decided by Lucas, 2026-11-10)
+
+> "I want to make something with generic use, so the user can use it to make a system rag about any context he wants to deploy, it should be like a sandbox."
+
+This is the product. The assignment's contract is one thing made with it, not what it is for.
+
+- **The unit is a sandbox**: one RAG someone is building. It holds its documents, its settings (every knob of the pipeline), its test questions with known answers, and (Proposed) its instructions for the model, the few sentences that say what this assistant is about.
+- **A person makes as many as they want**, each about its own subject, and they stay in that person's browser.
+- **The contract is the sample sandbox** that ships with the app, so a first visit has something to run, and so the assignment is answered by the same thing everyone else uses.
+- **Nothing in the pipeline or the interface may assume the contract.** Its file, its four questions and its language live in one preset (`src/lib/sandbox/presets.ts`). Defaults sized for it are that sandbox's settings, not constants.
+- **Taking a sandbox out** (Proposed): export it as a file with its settings, test questions and instructions, and import it elsewhere. What "deploy" should mean beyond that, for example a shareable link or a standalone page that only answers, is an open question (`05-roadmap.md`).
+
 ## The idea
 
 Most RAG demos are a chat box: a question goes in, an answer comes out, and the part that decides whether the answer is any good (which passages were found, and why those) stays hidden. RAGui turns that part inside out. It is a RAG where the pipeline is the interface: you watch your documents being cut into chunks, the chunks becoming vectors, your question landing among them, the nearest ones being pulled out, ranked, merged and packed into a prompt. The model writes the last paragraph; everything before it is code you can see, step through and change.
@@ -58,7 +70,7 @@ When time is short, protect these and cut everything else.
 
 ## The product in one page
 
-1. **Bring documents.** Paste text or drop `.txt`, `.md` or `.pdf` files. The assignment's contract is preloaded, with its four questions one click away (this needs the PDF in the public repository or its text typed into the code: open question in `05-roadmap.md`).
+1. **Open or make a sandbox.** The sample one holds the assignment's contract and its four questions. A new one starts empty: paste text or drop `.txt`, `.md` or `.pdf` files, and name what it is about.
 2. **Watch them be indexed.** The Pipeline plays the ingestion: load, clean, chunk, embed, index. Chunk boundaries and overlaps are drawn on the text; each vector is a strip of 384 coloured cells; each chunk lands as a point on the embedding map.
 3. **Ask.** The question is embedded and dropped on the map. The Retriever shows the search: the nearest chunks light up, the dense ranking and the keyword ranking race side by side, the two lists merge, near-duplicates are dropped, and the survivors are packed into the context under a token budget.
 4. **Read the answer.** Groq streams an answer that cites its sources as `[1]`, `[2]`. Each citation points back to its chunk on the text and on the map. A citation that points to nothing, and a sentence with no citation, are marked by code. If nothing in the corpus is close enough to the question, the model is not called at all.
@@ -73,14 +85,15 @@ When time is short, protect these and cut everything else.
 
 ## Success criteria
 
-1. **The four questions of the statement are answered correctly on the contract, each citing the right passage** (Decided by the assignment). For each, the passage holding the answer is in the retrieved context; this part is checked by code, with no model involved (`02-rag-pipeline.md`, "The four questions as a test").
+1. **The four questions of the statement are answered correctly on the contract, each citing the right passage** (Decided by the assignment). For each, the passage holding the answer is in the retrieved context; this part is checked by code, with no model involved (`02-rag-pipeline.md`, "Test questions").
 2. Deployed on Vercel; opens on a laptop and on a phone. (Proposed, as are the rest.)
 3. A document dropped in the browser is chunked, embedded and searchable with no server call and no key.
 4. The Pipeline and the Retriever play, pause, step and scrub a real run, and their numbers match the functions in `src/lib/rag/`.
 5. With `GROQ_API_KEY` set, an answer streams with citations that link back to chunks; with no relevant chunk, no model call is made.
 6. Changing a setting and replaying shows a different, explainable result.
+7. A sandbox made from someone's own documents works the same way as the sample one, with its own test questions, and nothing in it mentions the contract (Decided by Lucas's "generic use", 2026-11-10).
 
-## Language (Proposed, the same rule as Debait)
+## Language (Decided by Lucas, 2026-11-10: bilingual, Portuguese and English)
 
 - **The whole codebase is English**: code, comments, identifiers, commits, spec, README.
 - The statement, the contract and the four questions are in Portuguese, so Portuguese is the language that has to work; English is the extra.

@@ -4,16 +4,16 @@ Short, stable documents so any session (human or Claude Code) can pick up the wo
 
 | File | What it holds |
 |---|---|
-| [00-overview.md](00-overview.md) | The assignment and its four questions, the idea, the three principles, the product in one page, success criteria |
-| [01-architecture.md](01-architecture.md) | What runs where, the trace, the data model, the single server route, the folder tree, decisions |
-| [02-rag-pipeline.md](02-rag-pipeline.md) | The deterministic core: what the assignment's contract demands, chunking, embeddings, dense and sparse search, fusion, diversity, the gate, context assembly, the prompt, citation checks, the four questions as a test |
-| [03-ui-design.md](03-ui-design.md) | The visual direction, the two main components (Pipeline and Retriever), their motion, the screens |
-| [04-stack-and-versions.md](04-stack-and-versions.md) | Versions looked up on 2026-11-10, env vars, commands, Groq models and limits, lessons inherited |
+| [00-overview.md](00-overview.md) | The assignment and its four questions, the sandbox idea, the three principles, the product in one page, success criteria |
+| [01-architecture.md](01-architecture.md) | What runs where, the trace, the data model, the single server route, the folder tree, decisions, what the scaffold contains |
+| [02-rag-pipeline.md](02-rag-pipeline.md) | The deterministic core: what the assignment's contract demands, chunking, embeddings, dense and sparse search, fusion, diversity, the gate, context assembly, the prompt, citation checks, test questions graded by code |
+| [03-ui-design.md](03-ui-design.md) | The visual direction, the two main components (Pipeline and Retriever), their motion, the screens, what the scaffold looks like |
+| [04-stack-and-versions.md](04-stack-and-versions.md) | Versions installed and still to install, how the scaffold was made, env vars, commands, CI and branch rules, Groq models and limits, lessons inherited |
 | [05-roadmap.md](05-roadmap.md) | Status, build order, open questions for Lucas |
 
 ## Status legend
 
-Nothing is built yet: the spec was written on 2026-11-10, before any code, and revised the same day once the assignment was read. Every claim carries one of these:
+The spec was written on 2026-11-10, before any code, revised the same day once the assignment was read, and again when the app was scaffolded. No pipeline stage is built yet. Every claim carries one of these:
 
 - **Decided**: chosen by Lucas or forced by a fact; build it this way unless a new fact appears.
 - **Proposed**: a default worth starting from, chosen by Claude; change freely and record why.

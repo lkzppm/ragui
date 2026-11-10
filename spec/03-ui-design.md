@@ -1,6 +1,6 @@
 # 03 — UI and design
 
-Status on 2026-11-10: **Proposed, nothing built, nothing seen by Lucas.** The only fixed inputs are his words: "clean and modern", and "I want the rag pipeline and the retriever to be strong animated UI components, so the user sees what is happening in the rag". In CV-AI and Debait the first visual direction was rejected and redone, so build the two main components on plain tokens first and expect the look to change.
+Status on 2026-11-10: **Proposed. The skeleton is built ("As scaffolded" below); the Pipeline's motion and the Retriever are not. Nothing has been seen by Lucas.** The only fixed inputs are his words: "clean and modern", and "I want the rag pipeline and the retriever to be strong animated UI components, so the user sees what is happening in the rag". In CV-AI and Debait the first visual direction was rejected and redone, so build the two main components on plain tokens first and expect the look to change.
 
 ## Design idea
 
@@ -48,7 +48,7 @@ The contract yields about 15 to 20 chunks, not hundreds. That shifts the weight 
 
 - **The map is sparse**, so each point can be a labelled, clickable node (its clause title beside it) instead of an anonymous dot, and plain SVG is enough. Canvas only matters once someone drops in a long document.
 - **The ranking race and the score breakdown carry the demo.** With so few candidates every card fits on screen, and the interesting moments are the decoys: the landlord's address ranking next to the property's, the deposit of R$ 6.400,00 next to the rent. Give them room.
-- **A test panel** sits beside the Retriever when the contract is the corpus: the statement's four questions, each with the rank of the chunk that holds its answer (dense, sparse, fused) and a mark for "in the context". It recomputes on every setting change, with no model call (`02-rag-pipeline.md`, "The four questions as a test"). Clicking a question runs it.
+- **A test panel** sits beside the Retriever: the sandbox's test questions (for the sample, the statement's four), each with the rank of the chunk that holds its answer (dense, sparse, fused) and a mark for "in the context". It recomputes on every setting change, with no model call (`02-rag-pipeline.md`, "Test questions"). Clicking a question runs it.
 
 ### Supporting views
 
@@ -66,8 +66,10 @@ As in Debait and GraphMan: the name, one sentence, and a figure that explains. T
 
 ### Lab `/lab`
 
+The lab always shows one sandbox; a switcher in its header lists the others and makes a new one (the sample sandbox cannot be deleted, only copied). The sketch below is the target, not the scaffold:
+
 ```
-┌ ragui ─ corpus: 3 docs · 142 chunks · e5-small q8 ───────────── PT/EN  ☀ ┐
+┌ ragui ─ sandbox: Contrato ▾ · 1 doc · 17 chunks · e5-small q8 ── PT/EN  ☀ ┐
 │ ●load ─ ●clean ─ ●chunk ─ ●embed ─ ●index     ●ask ═╦═ ●dense ═╗          │
 │                                                     ╚═ ●sparse ╩ ●fuse ─ … │
 ├───────────────┬──────────────────────────────────────┬─────────────────────┤
@@ -93,8 +95,21 @@ As in Debait and GraphMan: the name, one sentence, and a figure that explains. T
 - `prefers-reduced-motion`: the playhead jumps from step to step and the views crossfade; packets, flights and the growing ring are off. Everything stays readable with no motion at all.
 - The projector case matters (this will be shown in a classroom): at large zoom the current stage, its number and the top hits must be readable from the back of a room.
 
+## As scaffolded (2026-11-10)
+
+A first, deliberately plain pass, to be changed by Lucas:
+
+- **Tokens** (`src/app/globals.css`): a warm off-white page and near-black text in light, the reverse in dark; `--query` indigo (`#4f46e5` / `#8b8cf9`), `--corpus` slate, `--flag` amber; 8px radius; hairline borders. Geist Sans and Geist Mono from the `geist` package (no download at build time). The `eyebrow` and `num` utilities.
+- **Top bar**: the mark and wordmark ("RAG" plain, "ui" in the query colour), the lab link, GitHub, the language switch (a sliding thumb), the theme button. One row at every width.
+- **The mark**: a filled dot with a ring among four small dots, a question and the search around it, among passages. Also the favicon.
+- **Landing**: the name, one sentence, the button into the lab, the rail as a still figure, three short statements of the principles.
+- **Lab**: the sandbox's name and description, a dashed notice that nothing runs yet, the rail, then three columns: documents, the stage inspector, the test questions. One column on a phone.
+- **The rail is two rows**, indexing above and the question below: the 13 columns do not fit one row at 1280px. Each stage is a chip with its number, icon and name; the selected one has a border in the query colour that slides between chips. Dense and keyword search are stacked in one column. On a phone each row scrolls sideways. There are no edges with packets yet, only hairlines.
+- **The stage inspector**: the stage's position ("7 of 14"), a tag saying whether code or the model does it, what it does in two sentences, the expression it computes, and the settings it reads with their current values. When the pipeline runs, each stage's own view replaces the description.
+- **Seen by Claude** in headless Chromium on 2026-11-10: `/lab` at 1440px and 390px in light, at 1280px in dark; `/` at 1440px in light. In Portuguese only (the English dictionary is type-checked against the same shape but was not looked at on screen). Not seen: any real browser, a real phone, the theme and language switches being clicked.
+
 ## Not decided
 
-- The accent colour and the exact palette.
+- The accent colour and the exact palette (the scaffold's are placeholders).
 - Whether the map is drawn with canvas 2D or with `vgpu` (WebGPU), which the sister projects use. Canvas 2D is enough for thousands of points; `vgpu` only earns its place if the map gets effects that need a shader.
 - A logo or mark.
