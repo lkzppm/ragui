@@ -1,89 +1,38 @@
 "use client";
 
-import { ExternalLink, FileText } from "lucide-react";
-import { useState } from "react";
+import { useEffect } from "react";
 import { PipelineRail } from "@/components/pipeline/pipeline-rail";
-import { useT } from "@/i18n/LocaleProvider";
-import type { StageId } from "@/lib/rag/types";
-import { DEFAULT_PRESET } from "@/lib/sandbox/presets";
-import { Panel, Tag } from "./panel";
-import { StageInspector } from "./stage-inspector";
+import { startPlayback, useLab } from "@/lib/store/lab";
+import { AnswerPanel } from "./answer-panel";
+import { AskBar } from "./ask-bar";
+import { Sidebar } from "./sidebar";
+import { Stage } from "./stage";
 
 /**
- * The lab, as a skeleton: one sandbox (the bundled sample), the pipeline as
- * it is defined, and the inspector of the selected stage. Nothing runs yet;
- * the page says so. What is on screen is real all the same: the stages, the
- * formulas and the settings are the ones the pipeline code will use.
+ * The lab, one fixed screen from `lg` up: the sandbox in a sidebar on the
+ * left; on the right the pipeline along the top, the stage and the answer
+ * side by side, and the question with the transport along the bottom.
+ * Nothing scrolls the page; each panel scrolls inside itself. On a phone
+ * the same parts stack and the page scrolls.
  */
 export function Lab() {
-  const t = useT();
-  const sandbox = DEFAULT_PRESET;
-  const [selected, setSelected] = useState<StageId>("dense");
-  const preset = t.presets[sandbox.id];
+  useEffect(() => {
+    void useLab.getState().boot();
+    // In development the store is on `window.lab`, to drive the lab from the console or a script.
+    if (process.env.NODE_ENV !== "production") (window as unknown as { lab: typeof useLab }).lab = useLab;
+    return startPlayback();
+  }, []);
 
   return (
-    <main className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6">
-      <header className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className="eyebrow">{t.lab.sandbox}</span>
-          {sandbox.preset && <Tag>{t.lab.sample}</Tag>}
+    <main className="lab flex animate-[rise_0.5s_var(--ease)_backwards] flex-col lg:grid lg:h-[calc(100svh-var(--nav-h))] lg:grid-cols-[17.5rem_minmax(0,1fr)] lg:overflow-hidden">
+      <Sidebar className="max-lg:order-last max-lg:border-t" />
+      <div className="flex min-h-0 min-w-0 flex-col">
+        <PipelineRail className="shrink-0 border-b border-border bg-card" />
+        <div className="min-h-0 flex-1 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <Stage className="max-lg:h-[46rem]" />
+          <AnswerPanel className="max-lg:border-t" />
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">{preset.name}</h1>
-        <p className="max-w-2xl text-muted-foreground">{preset.description}</p>
-      </header>
-
-      <aside className="rounded-xl border border-dashed border-flag/50 px-4 py-3 text-sm">
-        <strong className="font-medium text-flag">{t.lab.scaffold.title}.</strong> <span className="text-muted-foreground">{t.lab.scaffold.body}</span>
-      </aside>
-
-      <PipelineRail selected={selected} onSelect={setSelected} />
-
-      <div className="grid items-start gap-4 lg:grid-cols-[17rem_minmax(0,1fr)_21rem]">
-        <Panel title={t.lab.documents} aside={<span className="num text-xs text-muted-foreground">{sandbox.documents.length}</span>}>
-          <ul className="divide-y divide-border">
-            {sandbox.documents.map((document) => (
-              <li key={document.name} className="flex items-center gap-2.5 px-4 py-3">
-                <FileText className="size-4 shrink-0 text-corpus" />
-                <span className="num min-w-0 flex-1 truncate text-xs" title={document.name}>
-                  {document.name}
-                </span>
-                {document.url && (
-                  <a
-                    href={document.url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    title={t.lab.openDocument(document.name)}
-                    aria-label={t.lab.openDocument(document.name)}
-                    className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  >
-                    <ExternalLink className="size-3.5" />
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
-        </Panel>
-
-        <StageInspector id={selected} settings={sandbox.settings} />
-
-        <Panel title={t.lab.tests} aside={<span className="num text-xs text-muted-foreground">{sandbox.golden.length}</span>}>
-          <p className="border-b border-border px-4 py-3 text-xs leading-relaxed text-muted-foreground">{t.lab.testsHint}</p>
-          <ol className="divide-y divide-border">
-            {sandbox.golden.map((item, index) => (
-              <li key={item.id} className="flex gap-3 px-4 py-3">
-                <span className="num pt-0.5 text-xs text-muted-foreground">{index + 1}</span>
-                <div className="flex min-w-0 flex-col gap-1">
-                  <span className="text-sm" lang="pt-BR">
-                    {item.question}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {t.lab.expected}: <span className="num text-foreground" lang="pt-BR">{item.expect}</span>
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </Panel>
+        <AskBar className="shrink-0 max-lg:sticky max-lg:bottom-0 max-lg:z-10" />
       </div>
     </main>
   );

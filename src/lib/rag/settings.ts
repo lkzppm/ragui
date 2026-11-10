@@ -60,15 +60,26 @@ export interface Settings {
 }
 
 /**
- * Defaults sized for the assignment's contract: three pages, about 3,900
- * characters, which would fit in a prompt whole. The context is kept well
- * under that so retrieval has something to decide. All of them are starting
- * points to tune, not measured values (spec/02-rag-pipeline.md).
+ * Where a new sandbox starts: sizes that suit a document of a few pages or
+ * more. Starting points, not measured values; the test questions of a
+ * sandbox are how they get tuned. The gate is off until someone calibrates
+ * it for their documents and model.
  */
 export const DEFAULT_SETTINGS: Settings = {
-  chunk: { strategy: "structure", size: 400, overlap: 60 },
+  chunk: { strategy: "structure", size: 500, overlap: 80 },
   embed: { model: "Xenova/multilingual-e5-small", dtype: "q8", device: "wasm" },
   retrieve: { mode: "hybrid", k: 8, k1: 1.2, b: 0.75, rrfK: 60, lambda: 0.7, threshold: null },
-  context: { sources: 4, budget: 500, order: "rank" },
+  context: { sources: 4, budget: 800, order: "rank" },
   generate: { model: "openai/gpt-oss-120b", temperature: 0, seed: 7, maxOutputTokens: 400 },
 };
+
+/** What each control may be set to. */
+export const RANGES = {
+  size: { min: 100, max: 1200, step: 20 },
+  overlap: { min: 0, max: 200, step: 10 },
+  k: { min: 1, max: 20, step: 1 },
+  lambda: { min: 0, max: 1, step: 0.05 },
+  threshold: { min: 0.7, max: 0.95, step: 0.005 },
+  sources: { min: 1, max: 8, step: 1 },
+  budget: { min: 100, max: 2000, step: 50 },
+} as const;

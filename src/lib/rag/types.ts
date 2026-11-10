@@ -1,11 +1,12 @@
 /**
- * The vocabulary of the pipeline. A run returns a `Trace`: an ordered list
- * of steps, each one plain data with its real inputs, outputs and duration.
+ * The vocabulary of the pipeline. A run returns a trace: an ordered list of
+ * steps, each one plain data with its real inputs, outputs and duration.
  * The interface draws `(trace, playhead)` and keeps no pipeline state, so
  * what moves on screen is always something that was computed.
  *
  * Nothing in `src/lib/rag/` may touch React, the DOM, IndexedDB, the
- * network, the clock or a random source. Ids are content hashes.
+ * network, the clock or a random source: the embedder and the clock are
+ * handed in (`Runtime`). Ids are content hashes; ties are broken by position.
  */
 import type { ChunkStrategy, EmbedDevice, EmbedDtype, EmbedModelId, RetrieveMode } from "./settings";
 
@@ -25,19 +26,32 @@ export type StageId =
   | "generate"
   | "verify";
 
+export type DocType = "pdf" | "text" | "markdown";
+
+/** A document as it was read, before cleaning. */
+export interface RawDoc {
+  name: string;
+  type: DocType;
+  text: string;
+}
+
 /** A document after cleaning. Offsets everywhere refer to `text`. */
 export interface Doc {
-  /** Hash of the original bytes. */
+  /** Hash of the clean text. */
   id: string;
   name: string;
-  type: "pdf" | "text" | "markdown";
+  type: DocType;
   text: string;
+  /** Characters before cleaning. */
+  rawChars: number;
 }
 
 export interface Chunk {
   /** Hash of (docId, start, end). */
   id: string;
   docId: string;
+  /** Its row in the index. */
+  index: number;
   start: number;
   end: number;
   text: string;
@@ -54,13 +68,42 @@ export interface EmbedModel {
   dtype: EmbedDtype;
   device: EmbedDevice;
   dims: number;
+  /** Tokens the model reads; the rest of a longer text is ignored. */
+  maxTokens: number;
 }
 
-/** A chunk with a score in some list. `rank` starts at 1. */
+export interface Embedded {
+  /** L2-normalised. */
+  vector: Float32Array;
+  tokens: number;
+  truncated: boolean;
+}
+
+/** What turns text into vectors: a Web Worker in the browser, the same model in-process in Node. */
+export interface Embedder {
+  model: EmbedModel;
+  embed(texts: string[], kind: "query" | "passage", onProgress?: (done: number, total: number) => void): Promise<Embedded[]>;
+}
+
+/** What the pure functions cannot have themselves. */
+export interface Runtime {
+  embedder: Embedder;
+  /** Milliseconds, for the durations in the trace. */
+  now: () => number;
+  /** Vectors already computed, by model, precision and text. */
+  cache: Map<string, Embedded>;
+}
+
+/** A chunk with a score in some list. `rank` starts at 1; `chunk` is its row in the index. */
 export interface Hit {
-  chunkId: string;
+  chunk: number;
   score: number;
   rank: number;
+}
+
+export interface SparseHit extends Hit {
+  /** The question's terms found in the chunk, and what each added to the score. */
+  matched: { term: string; tf: number; score: number }[];
 }
 
 export interface FusedHit extends Hit {
@@ -71,11 +114,11 @@ export interface FusedHit extends Hit {
 
 export interface DroppedHit extends Hit {
   /** The already picked chunk it was too close to. */
-  tooCloseTo: string;
+  tooCloseTo: number;
   similarity: number;
 }
 
-/** One term of the question in the sparse search. */
+/** One term of the question in the keyword search. */
 export interface TermStat {
   term: string;
   /** Chunks that contain it. */
@@ -83,12 +126,14 @@ export interface TermStat {
   idf: number;
 }
 
-/** A numbered entry of the context: one chunk, or several adjacent ones merged. */
+/** A numbered entry of the context: one chunk, or adjacent ones merged. */
 export interface Source {
   n: number;
   docId: string;
   title: string | null;
-  chunkIds: string[];
+  chunks: number[];
+  start: number;
+  end: number;
   text: string;
   tokens: number;
 }
@@ -99,11 +144,34 @@ export interface Projection {
   components: [Float32Array, Float32Array];
   /** One (x, y) pair per chunk, in index order. */
   points: Float32Array;
+  /** Share of the variance each axis keeps, 0 to 1. */
+  explained: [number, number];
+}
+
+export interface SparseIndex {
+  /** Per chunk: term → occurrences. */
+  tf: Map<string, number>[];
+  /** Term → chunks that contain it. */
+  df: Map<string, number>;
+  /** Words per chunk. */
+  lengths: number[];
+  avgLength: number;
+}
+
+/** Everything a question is answered from. Built by `ingest`, read by `query`. */
+export interface Index {
+  docs: Doc[];
+  chunks: Chunk[];
+  model: EmbedModel;
+  /** chunks × dims, row-major, rows L2-normalised. */
+  vectors: Float32Array;
+  sparse: SparseIndex;
+  projection: Projection;
 }
 
 export interface Usage {
-  inputTokens: number;
-  outputTokens: number;
+  inputTokens: number | null;
+  outputTokens: number | null;
 }
 
 export interface CitationCheck {
@@ -117,35 +185,44 @@ export interface CitationCheck {
   support: number | null;
 }
 
+export interface AnswerSentence {
+  text: string;
+  start: number;
+  end: number;
+  citations: number[];
+}
+
+export interface PromptMessages {
+  system: string;
+  user: string;
+}
+
 export type Step =
-  | { kind: "load"; docId: string; name: string; chars: number; ms: number }
-  | { kind: "clean"; docId: string; before: number; after: number; ms: number }
-  | { kind: "chunk"; docId: string; strategy: ChunkStrategy; size: number; overlap: number; chunkIds: string[]; ms: number }
-  | { kind: "embed"; model: EmbedModel; embedded: string[]; cached: string[]; ms: number }
-  | { kind: "index"; chunks: number; dims: number; terms: number; projection: Projection; ms: number }
-  | { kind: "query"; text: string; tokens: number; vector: Float32Array; ms: number }
-  | { kind: "dense"; hits: Hit[]; scanned: number; ms: number }
-  | { kind: "sparse"; terms: TermStat[]; hits: Hit[]; ms: number }
+  | { kind: "load"; docs: { id: string; name: string; chars: number }[]; ms: number }
+  | { kind: "clean"; before: number; after: number; ms: number }
+  | { kind: "chunk"; strategy: ChunkStrategy; size: number; overlap: number; count: number; perDoc: number[]; ms: number }
+  | { kind: "embed"; model: EmbedModel; embedded: number; cached: number; tokens: number; truncated: number; ms: number }
+  | { kind: "index"; chunks: number; dims: number; terms: number; ms: number }
+  | { kind: "query"; text: string; tokens: number; vector: Float32Array; point: [number, number]; ms: number }
+  | { kind: "dense"; hits: Hit[]; scores: Float32Array; scanned: number; ms: number }
+  | { kind: "sparse"; terms: TermStat[]; hits: SparseHit[]; ms: number }
   | { kind: "fuse"; mode: RetrieveMode; k: number; hits: FusedHit[]; ms: number }
   | { kind: "diversify"; lambda: number; kept: Hit[]; dropped: DroppedHit[]; ms: number }
-  | { kind: "gate"; best: number; threshold: number | null; pass: boolean }
-  | { kind: "assemble"; sources: Source[]; tokens: number; budget: number; leftOut: Hit[] }
-  | { kind: "generate"; model: string; usage: Usage | null; ms: number }
-  | { kind: "verify"; citations: CitationCheck[]; uncited: number[] };
+  | { kind: "gate"; best: number; threshold: number | null; pass: boolean; ms: number }
+  | { kind: "assemble"; sources: Source[]; tokens: number; budget: number; leftOut: Hit[]; prompt: PromptMessages; ms: number }
+  | { kind: "generate"; model: string; usage: Usage | null; finishReason: string | null; ms: number }
+  | { kind: "verify"; sentences: AnswerSentence[]; citations: CitationCheck[]; uncited: number[]; ms: number };
 
 export type StepOf<K extends Step["kind"]> = Extract<Step, { kind: K }>;
 
+type IngestKind = "load" | "clean" | "chunk" | "embed" | "index";
+
 /** Load to index: produced when the documents or the chunk settings change. */
-export type IngestTrace = Extract<Step, { kind: "load" | "clean" | "chunk" | "embed" | "index" }>[];
+export type IngestTrace = Extract<Step, { kind: IngestKind }>[];
 
 /** Query to verify: produced on each question. */
-export type QueryTrace = Exclude<Step, { kind: "load" | "clean" | "chunk" | "embed" | "index" }>[];
+export type QueryTrace = Exclude<Step, { kind: IngestKind }>[];
 
-/**
- * Where a replay stands: the step being shown and how far into it, 0 to 1.
- * This is the only animation state there is.
- */
-export interface Playhead {
-  step: number;
-  progress: number;
+export function stepOf<K extends Step["kind"]>(trace: readonly Step[] | null | undefined, kind: K): StepOf<K> | null {
+  return (trace?.find((step) => step.kind === kind) as StepOf<K> | undefined) ?? null;
 }

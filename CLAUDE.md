@@ -8,7 +8,9 @@ A sandbox for building a RAG about any subject, where the pipeline is the interf
 
 ## Where things stand
 
-- 2026-11-10: the spec and **the scaffold** exist: the Next.js app, both themes, both languages, the landing page, the lab's skeleton with the pipeline rail and the stage inspector, the typed trace and settings, the sample sandbox, CI. **No pipeline code runs yet**: no chunker, no embedder, no search, no route, no deployment. `spec/05-roadmap.md` has the build order.
+- 2026-11-10: **it works locally.** The whole pipeline runs in the browser (embedder in a Web Worker), Groq writes the answer through `/api/answer`, the lab replays every run, and the landing page has its WebGPU background. The statement's four questions are answered correctly, with citations. `spec/05-roadmap.md` says what was run and what was not; `spec/02-rag-pipeline.md` ("Measured") has the numbers.
+- **Lucas has not seen it yet.** The look, the motion and the wording are a first pass.
+- Not built: saving and making sandboxes (one sample; a visitor's documents live in memory), a deployment, tests.
 - **Delivery in about a month** (Lucas, 2026-11-10), so around 2026-12-10. The exact date and what is handed in are not confirmed.
 - The assignment was read on 2026-11-10 (`spec/00-overview.md`). **The acceptance test is its four questions on the contract**: the landlord's name, the tenant's CPF, the property's address, the rent. The expected answers and the decoys around each are in the spec. The deadline and what is handed in are not in the statement: ask Lucas.
 - The contract is published at `public/samples/contrato-locacao-residencial.pdf` (Lucas approved it on 2026-11-10). The statement (`.doc`) stays in `docs/assignment/`, git-ignored: it was not part of that approval.
@@ -18,17 +20,15 @@ A sandbox for building a RAG about any subject, where the pipeline is the interf
 ## Commands
 
 ```
-pnpm dev                                    # no configuration needed
+PORT=4517 pnpm dev                          # 3000 and 3111 are other projects' on this machine
 pnpm lint && pnpm typecheck && pnpm build   # must be green (CI enforces)
-```
-
-Planned, not written yet:
-
-```
-pnpm rag ingest <file>                      # the ingestion trace in the terminal
+pnpm exec vgpu check src/components/field/<name>.wgsl
+pnpm rag eval                               # the sample's test questions: is each answer retrieved?
 pnpm rag ask '<question>' [--answer]        # the query trace; --answer also calls Groq
-pnpm rag eval                               # the four questions on the contract: is each answer retrieved?
+pnpm rag ingest · pnpm rag figure           # every chunk · rewrite the landing page's figure
 ```
+
+Generation needs `GROQ_API_KEY` in `.env` (Lucas has one there). In development the lab's store is `window.lab`. To look at pages without a browser window, see "Driving it without a browser window" in `spec/04-stack-and-versions.md`.
 
 ## Rules
 
@@ -42,7 +42,13 @@ pnpm rag eval                               # the four questions on the contract
 - The contract is about 1,000 tokens and would fit in a prompt whole. Keep the default context well under that (4 sources, 500 tokens), or retrieval decides nothing and the demo shows nothing.
 - "Deterministic" describes retrieval, never the generated answer. The embedding map is a 2D projection and is labelled as one. Keep both statements true in UI and docs.
 - The whole codebase is English (code, comments, commits, docs). The UI and the prompt are bilingual, Portuguese by default (Lucas, 2026-11-10): every visible string lives in `src/i18n/` (`en.tsx` is the schema, `pt.tsx` must match it), never inline in a component, and no em dash in what the visitor reads. Content that belongs to a sandbox (a document, a test question) is data and is not translated. The project name comes from `src/lib/brand.ts`.
-- The stages are data: `STAGES` and `RAIL` in `src/lib/rag/stages.ts` drive the rail and the inspector. Add or reorder a stage there, with its name and explanation in both dictionaries.
+- The stages are data: `STAGES` and `RAIL` in `src/lib/rag/stages.ts` drive the rail and the stage header. Add or reorder a stage there, with its name and explanation in both dictionaries.
+- The replay has one piece of state, `cursor` (`src/lib/store/playhead.ts`), a motion value outside React. A view reads it through `useCursor` / `useRevealed` / `useEntered` (`use-cursor.ts`), which re-render only when the derived value changes. Never copy the cursor into React state, and never time a reveal with a delay: reveal by the cursor so that scrubbing and the speed control work.
+- Motion uses the springs in `src/lib/motion.ts` (critically damped by default; `SPRING_DROP` only for things that land). Pressable things carry the `press` utility; floating chrome is `glass`. Honour reduced motion, reduced transparency and more contrast (the rules are at the end of `globals.css`).
+- **Node and the browser give slightly different vectors** for the same text, enough to swap two neighbouring passages. A setting that passes `pnpm rag eval` may fail in the lab and the reverse: confirm in the browser (the sidebar's tests).
+- `normalizeCitations` exists because `gpt-oss` writes `【4】` whatever the prompt says. Keep it.
+- `src/components/site/figure-data.json` is written by `pnpm rag figure`. Regenerate it after changing the sample's settings or the pipeline; never edit it by hand.
+- vgpu is pinned at 0.5.0 like the sister projects. The field's uniform arrays (`132` points, `14` links) must match `POINTS` and `LINKS` in `space.ts`; run `vgpu check` after touching a shader.
 - Dependencies are added by the step that first imports them. pnpm refuses packages published in the last day; do not add exceptions to `pnpm-workspace.yaml` to get a newer one (this is why Next is 16.4.5 and not 16.4.6).
 - Colours come from the tokens in `src/app/globals.css`, never a hex value in a component. Animate `transform` and `opacity`; respect `prefers-reduced-motion`.
 - `src/components/ui/**` is generated by the shadcn CLI: re-add, do not hand-edit.
