@@ -1,0 +1,157 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------------
+   RAGui: a quiet page where the only things that move are the data.
+   Near-monochrome surfaces, hairline borders, one accent. Colour means
+   something: `--query` is the question and whatever it touches (hits,
+   citations, the selected stage), `--corpus` is the documents at rest,
+   `--flag` is what the code flags. Two themes: light (`:root`) and dark
+   (`.dark`, set on <html> before the first paint, see
+   `src/lib/use-theme.ts`). Components use these tokens, never a hex.
+   The palette is a starting point (spec/03-ui-design.md).
+   ------------------------------------------------------------------ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-query: var(--query);
+  --color-query-foreground: var(--query-foreground);
+  --color-corpus: var(--corpus);
+  --color-flag: var(--flag);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root {
+  color-scheme: light;
+
+  --query: #4f46e5;
+  --query-foreground: #ffffff;
+  --corpus: #64748b;
+  --flag: #b45309;
+
+  --background: #fafaf9;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #18181b;
+  --primary-foreground: #fafaf9;
+  --secondary: #f0f0ee;
+  --secondary-foreground: #18181b;
+  --muted: #f0f0ee;
+  --muted-foreground: #6b6b72;
+  --accent: rgba(24, 24, 27, 0.05);
+  --accent-foreground: #18181b;
+  --destructive: #b91c1c;
+  --border: rgba(24, 24, 27, 0.1);
+  --input: rgba(24, 24, 27, 0.2);
+  --ring: #4f46e5;
+  --radius: 0.5rem;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --query: #8b8cf9;
+  --query-foreground: #0b0b0c;
+  --corpus: #94a3b8;
+  --flag: #fbbf24;
+
+  --background: #0b0b0c;
+  --foreground: #ededee;
+  --card: #131315;
+  --card-foreground: #ededee;
+  --popover: #131315;
+  --popover-foreground: #ededee;
+  --primary: #ededee;
+  --primary-foreground: #0b0b0c;
+  --secondary: #1c1c1f;
+  --secondary-foreground: #ededee;
+  --muted: #1c1c1f;
+  --muted-foreground: #9a9aa2;
+  --accent: rgba(237, 237, 238, 0.07);
+  --accent-foreground: #ededee;
+  --destructive: #f87171;
+  --border: rgba(237, 237, 238, 0.1);
+  --input: rgba(237, 237, 238, 0.2);
+  --ring: #8b8cf9;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--query);
+    color: var(--query-foreground);
+  }
+  /* Tailwind v4 leaves buttons with the arrow cursor; everything clickable here gets the hand. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="radio"],
+  [role="tab"],
+  [role="switch"],
+  [role="option"],
+  [role="menuitem"],
+  summary,
+  select,
+  label:has(input:not(:disabled)) {
+    cursor: pointer;
+  }
+}
+
+/* Small spaced capitals above a title or a group. */
+@utility eyebrow {
+  font-family: var(--font-geist-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* Numbers that must not jitter while they change. */
+@utility num {
+  font-family: var(--font-geist-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
