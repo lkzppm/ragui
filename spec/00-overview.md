@@ -1,19 +1,44 @@
 # 00 — Overview
 
-## The assignment: not read yet
+## The assignment (read on 2026-11-10)
 
-Lucas gave the course material as a Google Drive link on 2026-11-10:
+Lucas supplied `Trab Final.zip` on 2026-11-10 (the Drive link given first could not be opened by Claude). It holds the statement of the course's final project and its data. The statement, `IA Trabalho Final .doc`:
 
-> https://drive.google.com/file/d/1kJbQEBXqOZ6LJq6j-hLcOcSFNeEoo6Fm/view
+> Universidade Federal do Rio de Janeiro · Escola de Engenharia - Departamento de Eletrônica · Curso de Inteligência Artificial - Prof. Sergio Palma · **Trabalho Final do Curso**
 
-**Claude could not open it.** The Drive connector answered "Requested entity was not found" and an anonymous download was redirected to the Google sign-in page, so the file is shared with an account other than the one the connector uses. Nothing in this spec comes from that file. What it holds is unknown: it may be the assignment statement, the documents to index, or both.
+The final project has **five parts**. RAGui is the first:
 
-Until it is read, treat as unknown: the deadline, the deliverables (report, presentation, code walkthrough), any required corpus, and any required tool or language. Once Lucas puts a copy in `docs/`, rewrite this section with the statement quoted verbatim and check every **Proposed** item in the spec against it. This is the first item in `05-roadmap.md`.
+> **Busca Semântica.** Construir uma estrutura RAG (Retrieval-Augmented Generation) que permita uma busca semântica e responda as seguintes perguntas:
+> - Qual o nome do Locador
+> - Qual o CPF do Locatário
+> - Qual o endereço do imóvel
+> - Qual o valor do aluguel
+
+The document to search is `CONTRATO DE LOCAÇÃO RESIDENCIAL.pdf`: a residential lease, three pages, 11 clauses, about 3,900 characters, in Portuguese, with text that extracts cleanly. Its people and numbers are placeholders (a CPF of `123.456.789-00`).
+
+The other four parts are classic machine learning on four CSV files and are **not part of this repository**: data classification (three models compared by ROC curve), sentiment analysis of reviews (two methods, accuracy, F1 and confusion matrix), multiple linear regression (apartment prices in Méier), and clustering (hierarchical with a dendrogram, then K-Means). Where they are done is Lucas's call (`05-roadmap.md`).
+
+**What the statement does not say**: a deadline, what is handed in (code, report, presentation), or any required tool, language or model. Those are still unknown.
+
+Local copies of the statement and the contract are in `docs/assignment/`, which is git-ignored: the files are the professor's, the repository is public, and publishing them is Lucas's decision.
+
+### The four questions are the acceptance test
+
+Read from the contract on 2026-11-10. The app is right when it answers these, each with a citation into the passage named:
+
+| Question | Expected answer | Where |
+|---|---|---|
+| Qual o nome do Locador | Carlos Henrique de Almeida | the LOCADOR block at the top |
+| Qual o CPF do Locatário | 987.654.321-00 (Mariana Souza Ribeiro) | the LOCATÁRIA block |
+| Qual o endereço do imóvel | Rua Hermengarda, nº 812, apartamento 302, Bairro Méier, Rio de Janeiro – RJ, CEP 20710-030 | Cláusula 1 |
+| Qual o valor do aluguel | R$ 3.200,00 por mês | Cláusula 4 |
+
+Each one has a wrong answer sitting close by in the same document, which is what makes this small contract a good subject for a RAG that shows its retrieval (`02-rag-pipeline.md`, "The assignment's document").
 
 ## What Lucas asked for (2026-11-10)
 
 - A **RAG system** for the Inteligência Artificial course (UFRJ, 2026/2), in the line of `../CV-AI` and `../Debate-ai`.
-- **More general** than those two: not tied to one theme. Any documents can go in.
+- **More general** than those two, and than the statement: not tied to one theme or one file. The contract is the document that is loaded on arrival and its four questions are the examples offered, but any documents can go in.
 - The focus is **the deterministic part of RAG**: embeddings, retrieval, everything that is code and not the model.
 - **The RAG pipeline and the retriever are strong animated UI components**, so the user sees what is happening inside the RAG.
 - **Clean and modern** style.
@@ -33,7 +58,7 @@ When time is short, protect these and cut everything else.
 
 ## The product in one page
 
-1. **Bring documents.** Paste text or drop `.txt`, `.md` or `.pdf` files. A sample corpus is preloaded so the first visit already shows something (which corpus: open question in `05-roadmap.md`).
+1. **Bring documents.** Paste text or drop `.txt`, `.md` or `.pdf` files. The assignment's contract is preloaded, with its four questions one click away (this needs the PDF in the public repository or its text typed into the code: open question in `05-roadmap.md`).
 2. **Watch them be indexed.** The Pipeline plays the ingestion: load, clean, chunk, embed, index. Chunk boundaries and overlaps are drawn on the text; each vector is a strip of 384 coloured cells; each chunk lands as a point on the embedding map.
 3. **Ask.** The question is embedded and dropped on the map. The Retriever shows the search: the nearest chunks light up, the dense ranking and the keyword ranking race side by side, the two lists merge, near-duplicates are dropped, and the survivors are packed into the context under a token budget.
 4. **Read the answer.** Groq streams an answer that cites its sources as `[1]`, `[2]`. Each citation points back to its chunk on the text and on the map. A citation that points to nothing, and a sentence with no citation, are marked by code. If nothing in the corpus is close enough to the question, the model is not called at all.
@@ -46,17 +71,19 @@ When time is short, protect these and cut everything else.
 - The embedding map is a 2D projection of 384 dimensions. Distances on it are a lossy picture; rankings always come from the real vectors. The map carries that note.
 - A high similarity score means "about the same thing", not "contains the answer", and not "true".
 
-## Success criteria (Proposed, until the assignment is read)
+## Success criteria
 
-1. Deployed on Vercel; opens on a laptop and on a phone.
-2. A document dropped in the browser is chunked, embedded and searchable with no server call and no key.
-3. The Pipeline and the Retriever play, pause, step and scrub a real run, and their numbers match the functions in `src/lib/rag/`.
-4. With `GROQ_API_KEY` set, an answer streams with citations that link back to chunks; with no relevant chunk, no model call is made.
-5. Changing a setting and replaying shows a different, explainable result.
+1. **The four questions of the statement are answered correctly on the contract, each citing the right passage** (Decided by the assignment). For each, the passage holding the answer is in the retrieved context; this part is checked by code, with no model involved (`02-rag-pipeline.md`, "The four questions as a test").
+2. Deployed on Vercel; opens on a laptop and on a phone. (Proposed, as are the rest.)
+3. A document dropped in the browser is chunked, embedded and searchable with no server call and no key.
+4. The Pipeline and the Retriever play, pause, step and scrub a real run, and their numbers match the functions in `src/lib/rag/`.
+5. With `GROQ_API_KEY` set, an answer streams with citations that link back to chunks; with no relevant chunk, no model call is made.
+6. Changing a setting and replaying shows a different, explainable result.
 
 ## Language (Proposed, the same rule as Debait)
 
 - **The whole codebase is English**: code, comments, identifiers, commits, spec, README.
+- The statement, the contract and the four questions are in Portuguese, so Portuguese is the language that has to work; English is the extra.
 - **The UI and the prompt are bilingual**, Brazilian Portuguese by default, English by a switch: one typed dictionary per language in `src/i18n/` (`en.tsx` is the schema, `pt.tsx` must match it), no visible string inline in a component.
 
 ## Name (Proposed)
