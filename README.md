@@ -2,7 +2,7 @@
 
 A RAG where the pipeline is the interface. Documents are chunked, embedded and searched in the browser, and two animated components, the Pipeline and the Retriever, replay every step with its real numbers: where a chunk was cut, what its vector looks like, why it ranked third, what fit in the prompt. A model on [Groq](https://groq.com) writes the final answer from the context the code selected.
 
-A UFRJ course project (Inteligência Artificial, 2026/2).
+A UFRJ course project (Inteligência Artificial, 2026/2): the "Busca Semântica" part of the final assignment, which asks for a RAG that answers four questions about a residential lease contract. RAGui does that, and takes any other document too.
 
 > **Status (2026-11-10): design only.** There is no code yet. The plan is in [`spec/`](spec/README.md).
 

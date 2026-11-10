@@ -4,6 +4,27 @@ The core of the project: every stage between a document and the prompt, as a pur
 
 Each stage below lists what it computes, its knobs, and what it gives the interface to show. The views are in `03-ui-design.md`.
 
+## The assignment's document
+
+The pipeline is general, but it is judged on one file: the lease in `docs/assignment/` and the four questions of the statement (`00-overview.md`). Measured on 2026-11-10 with `pdftotext`: 3 pages, 3,929 characters, 615 words, 11 clauses plus the two party blocks at the top and the signatures at the end.
+
+Every one of the four questions has a decoy in the same document, so each is a small retrieval test:
+
+| Question | The answer | The decoys |
+|---|---|---|
+| Qual o nome do Locador | Carlos Henrique de Almeida | Mariana Souza Ribeiro, the tenant, two lines below; the landlord's name appears again as the bank account holder and at the signature |
+| Qual o CPF do Locatário | 987.654.321-00 | the landlord's CPF, 123.456.789-00, and two RG numbers in the same blocks. The question says "Locatário"; the contract only ever says "LOCATÁRIA" |
+| Qual o endereço do imóvel | Rua Hermengarda, nº 812, apto 302, Méier (Cláusula 1) | **three addresses**: the landlord's home (Rua Baronesa de Mesquita, Tijuca) and the tenant's home (Rua Dias da Cruz, also in Méier) |
+| Qual o valor do aluguel | R$ 3.200,00 (Cláusula 4) | R$ 780,00 condominium fee, R$ 210,00 IPTU, R$ 6.400,00 deposit ("duas vezes o aluguel"), and a penalty of "três aluguéis" |
+
+What that means for the stages below:
+
+- **The document is tiny.** At 800 characters a chunk it becomes five or six chunks and retrieval has nothing to decide. The defaults are set for this file (small chunks, cut at the clauses), which gives roughly 15 to 20.
+- **The whole contract is about 1,000 tokens and would fit in the prompt.** Nobody needs a RAG to question three pages; the statement asks for one, and the point here is to show retrieval working. So the context is kept well under the size of the document (at most 4 sources, 500 tokens by default). With a generous budget every question would retrieve everything, all four answers would come out right, and nothing would have been demonstrated. Say this in the presentation rather than leave it to be noticed.
+- **Where a chunk is cut decides the answer.** If the LOCADOR and LOCATÁRIA blocks share a chunk, retrieval finds it for both of the first two questions and the model has to tell the two people apart; if they are separate chunks, retrieval has to. Both are worth showing, and the chunk view is where it is seen.
+- **Keyword search alone fails on "Locatário"** (the token `locatario` is not `locataria`), while dense search does not care; keyword search is what pins "CPF" and "aluguel". This document shows why hybrid exists.
+- **The PDF has traps for the clean stage**: bullets come out as private-use characters (U+F0B7, eight of them) and `fi` comes out as the ligature `ﬁ` (five times, as in "identiﬁcadas"), which would hide those words from keyword search.
+
 ## Ingestion
 
 ### 1. Load
@@ -14,6 +35,7 @@ Each stage below lists what it computes, its knobs, and what it gives the interf
 ### 2. Clean
 
 - Unicode NFC, `\r\n` to `\n`, collapse runs of spaces, at most one blank line, rejoin words hyphenated across a line break, drop repeated page headers and footers (a line that repeats on most pages).
+- Expand typographic ligatures (`ﬁ ﬂ ﬀ ﬃ ﬄ`) and turn private-use bullet glyphs into `-`. Both occur in the assignment's PDF. Not NFKC: it would also rewrite `nº` as `no`.
 - Shows: characters before and after, and what was removed.
 - Every later offset refers to the clean text, so this stage runs once per document and its output is what is stored.
 
@@ -22,10 +44,11 @@ Each stage below lists what it computes, its knobs, and what it gives the interf
 | Strategy | How it cuts | Knobs |
 |---|---|---|
 | `fixed` | every `size` characters, moved back to the nearest word boundary | `size`, `overlap` |
-| `recursive` (default) | paragraphs; a paragraph over `size` is cut into sentences; a sentence over `size` into words; neighbours are merged up to `size` | `size`, `overlap` |
-| `markdown` | by heading, keeping the heading path as the chunk's title, then `recursive` inside each section | `size`, `overlap` |
+| `recursive` | paragraphs; a paragraph over `size` is cut into sentences; a sentence over `size` into words; neighbours are merged up to `size` | `size`, `overlap` |
+| `structure` (default) | by heading, keeping the heading as the chunk's title, then `recursive` inside each section. A heading is a Markdown `#` line, or in plain text a short line in capitals (`LOCADOR:`, `CLÁUSULA 4 – DO VALOR DO ALUGUEL`) | `size`, `overlap` |
 
-- Defaults: `size` 800 characters, `overlap` 120.
+- Defaults: `structure`, `size` 400 characters, `overlap` 60, chosen for the assignment's contract (about 3,900 characters, 11 clauses) and to be tuned on it. A longer document wants larger chunks; the knob is there.
+- With `structure`, the heading travels with every chunk of its section and is embedded with it, so a chunk that only says "R$ 3.200,00 … todo dia 05" still carries "DO VALOR DO ALUGUEL".
 - Size is measured in **characters**, so the chunker stays synchronous and pure. After chunking, the embedder's own tokenizer counts each chunk's tokens (in the worker); a chunk over the model's limit is flagged "truncated by the embedder" with the cut point, because the model silently ignores the rest. Chunking by exact tokens is a later refinement.
 - A chunk is `{ id, docId, start, end, text, tokens }`. The overlap with the previous chunk is `prev.end − start` and is drawn on the text.
 
@@ -39,7 +62,7 @@ Each stage below lists what it computes, its knobs, and what it gives the interf
 | `Xenova/multilingual-e5-small` (default) | about 100, Portuguese included | 384 | 512 | 118 MB | `query: ` for questions, `passage: ` for chunks |
 | `Xenova/all-MiniLM-L6-v2` (light) | English | 384 | 256 | 23 MB | none |
 
-- The default is the multilingual one because the course and most likely the documents are in Portuguese. 118 MB is a slow first visit on classroom Wi-Fi: the browser caches it afterwards, the download is shown as its own stage with a progress bar, and the light model is one click away. Which to ship as default is an open question (`05-roadmap.md`).
+- The default is the multilingual one (Decided by the assignment, 2026-11-10): the contract and the four questions are in Portuguese, and the light model is trained on English. 118 MB is a slow first visit on classroom Wi-Fi: the browser caches it afterwards and the download is shown as its own stage with a progress bar. The light model stays as a switch, mostly to show what a model does outside its language.
 - Default backend: **WASM with `q8`**, the combination that runs everywhere and gives the same numbers on every machine as far as we know (Unverified). WebGPU with `fp32` is a speed option; its vectors differ slightly from the WASM ones, which is why vectors are cached per `(model, dtype)` and never mixed in one index.
 - The prefix rule of E5 is part of the model, not a detail: a question embedded without `query: ` lands in a different place. The prefix is added in `embed/models.ts` and shown in the interface.
 - Shows: the vector as a strip of 384 cells (blue negative, red positive, or one hue by magnitude), tokens per chunk, embedded versus cached counts, milliseconds per chunk.
@@ -64,7 +87,7 @@ Vectors are normalised, so cosine similarity is the dot product:
 sim(q, c) = Σ qᵢ · cᵢ        i = 1 … 384
 ```
 
-Scan every chunk, keep the `k` best (default `k` = 8). Ties are broken by `chunkId`, so the order is total and reproducible. Shows: the score of every chunk (the map can colour all of them), the top `k`, the number scanned, and for any one hit the per-dimension products that add up to its score.
+Scan every chunk, keep the `k` best as candidates (default `k` = 8; the context later takes at most 4 of them). Ties are broken by `chunkId`, so the order is total and reproducible. Shows: the score of every chunk (the map can colour all of them), the top `k`, the number scanned, and for any one hit the per-dimension products that add up to its score.
 
 ### 8. Sparse search (BM25)
 
@@ -74,6 +97,8 @@ idf(t)      = ln( 1 + (N − n(t) + 0.5) / (n(t) + 0.5) )
 ```
 
 `k1` = 1.2, `b` = 0.75; `N` chunks, `n(t)` chunks containing `t`, `f(t,c)` occurrences of `t` in `c`. Shows: the question's terms with their idf (rare words weigh more), and for a hit, which terms matched and what each contributed. This is the stage that makes exact names, codes and numbers findable when the embedding blurs them.
+
+With no stemming, "Locatário" in a question does not match "LOCATÁRIA" in the contract, and "aluguel" does not match "aluguéis". Leave it that way at first: the miss is visible in the term table and is the clearest argument on screen for the dense branch. A Portuguese stemmer (RSLP) is a later knob.
 
 ### 9. Fuse (Reciprocal Rank Fusion)
 
@@ -99,11 +124,11 @@ next = argmax over candidates c not yet picked:  λ · sim(c, q) − (1 − λ) 
 
 If the best dense similarity is under a threshold `τ`, the pipeline stops: the interface says nothing in the corpus is close to the question, and **the model is not called**. Zero tokens, no invented answer.
 
-`τ` depends on the model. E5 similarities are compressed into a high band (the model card warns that scores mostly fall between 0.7 and 1.0), so a value that works for MiniLM is useless for E5. Both defaults must be measured on the sample corpus with questions that have and do not have an answer; until then treat any number as a placeholder.
+`τ` depends on the model. E5 similarities are compressed into a high band (the model card warns that scores mostly fall between 0.7 and 1.0), so a value that works for MiniLM is useless for E5. Both defaults must be measured on the contract with questions that have and do not have an answer; until then treat any number as a placeholder. Questions the contract cannot answer, to calibrate with and to offer as an example: "Qual o nome do fiador?" (the guarantee is a cash deposit, there is no guarantor) and something unrelated to a lease. The first is the hard case: it is about leases, so its similarity will be high, and a threshold alone may let it through to the model, whose instructions then have to hold.
 
 ### 12. Assemble the context
 
-- Walk the ranked list and add chunks while the total stays under the token budget (default 1,800 tokens, sized for Groq's free tier: `04-stack-and-versions.md`). What did not fit is listed, not hidden.
+- Walk the ranked list and add chunks while the count stays within `n` sources (default 4) and the total under the token budget (default 500 tokens, half the contract: see "The assignment's document"; raise both for larger corpora, up to what Groq's free tier allows, `04-stack-and-versions.md`). What did not fit is listed, not hidden.
 - Adjacent or overlapping chunks from the same document are merged into one source so the overlap is not paid twice.
 - Sources are numbered `[1]` … `[n]`. Order: by rank (default) or by position in the document, a knob worth showing because order changes answers.
 - Token counts here are an estimate (characters ÷ 4, rounded up); the real count comes back from Groq in `usage` and both are shown.
@@ -137,6 +162,26 @@ Code reads the answer after it is complete:
 - a sentence with no citation is marked **unsupported** (except the "the sources do not say" answer);
 - for each cited sentence, the share of its content words that occur in the cited source is shown as a rough support score. It is a lexical check, labelled as such: it catches a citation pasted onto an unrelated sentence, not a subtle misreading.
 
+## The four questions as a test
+
+The statement gives four questions and the contract gives their answers, so retrieval can be graded by code, with no model and no judgement:
+
+```ts
+const golden = [
+  { q: "Qual o nome do Locador",    expect: "Carlos Henrique de Almeida", near: "LOCADOR" },
+  { q: "Qual o CPF do Locatário",   expect: "987.654.321-00" },
+  { q: "Qual o endereço do imóvel", expect: "Rua Hermengarda, nº 812" },
+  { q: "Qual o valor do aluguel",   expect: "R$ 3.200,00" },
+];
+```
+
+For each question, run the query pipeline and find the rank of the first chunk whose text contains `expect` (for the first one, the chunk that also contains `near`, since the name appears three times). Report per question: that rank in the dense list, in the sparse list, after fusion, and whether the chunk made it into the context. Over the four: recall@k and the mean reciprocal rank.
+
+- This is the same thing `pnpm rag eval` prints in the terminal and a small panel shows in the lab, recomputed whenever a setting changes. It turns "which chunk size is better" into four numbers.
+- It is also the unit test that matters: with the default settings, all four answers are in the context.
+- The list lives in `src/lib/rag/golden.ts`, next to the sample corpus. It is specific to the contract; a user's own documents have no golden set, and the panel hides.
+- It grades retrieval only. Whether the model then writes the right sentence is read by a person, four times.
+
 ## What "deterministic" means here
 
 - Stages 1 to 12 are pure functions of `(documents, settings, question, model, dtype)`. No randomness, no clock, no network, ids from hashes, ties broken by id.
@@ -151,13 +196,14 @@ The functions must run under `tsx` too (`@huggingface/transformers` works in Nod
 pnpm rag ingest <file> [--size 800 --overlap 120]     # prints the ingestion trace
 pnpm rag ask '<question>' [--mode hybrid --k 8]       # prints the query trace, no model call
 pnpm rag ask '<question>' --answer                    # also calls Groq
+pnpm rag eval                                         # the four questions on the contract: ranks, recall@k, MRR
 ```
 
 Because the core is pure, it is the natural place for unit tests with fixed inputs and expected rankings (Proposed: `vitest` on `src/lib/rag/` only; Debait shipped without tests, so this is Lucas's call).
 
 ## Later, not in the first version
 
-Query rewriting and HyDE (a model call before retrieval, which breaks principle 1 unless shown as an optional, labelled stage); a cross-encoder reranker in the worker; retrieval metrics on a small set of questions with known answers (recall@k, MRR), which would let two settings be compared by a number instead of by eye; token-exact chunking; quantised vectors.
+Query rewriting and HyDE (a model call before retrieval, which breaks principle 1 unless shown as an optional, labelled stage); a cross-encoder reranker in the worker; a Portuguese stemmer for the sparse branch; a golden set the user can write for their own documents; token-exact chunking; quantised vectors.
 
 ## References
 

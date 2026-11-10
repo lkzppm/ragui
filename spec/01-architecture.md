@@ -96,6 +96,7 @@ src/
       rrf.ts  mmr.ts  gate.ts  assemble.ts
       prompt.ts  verify.ts  project.ts (PCA)
       run-ingest.ts  run-query.ts            compose the steps, return a Trace
+      golden.ts  eval.ts                     the statement's four questions, graded by code
     embed/
       worker.ts  client.ts  models.ts        transformers.js behind one async function
     store/                                   IndexedDB + the zustand lab store
@@ -122,3 +123,5 @@ spec/  docs/
 | 2026-11-10 | The interface is a replay of a trace | Makes "show what is happening" literal and keeps animation state out of the pipeline |
 | 2026-11-10 | Content-hash ids, vectors cached by text | Reproducible runs; cheap re-chunking |
 | 2026-11-10 | One stateless route, no database | Fits Vercel's free plan; nothing to operate |
+| 2026-11-10 | The assignment's contract is the preloaded corpus and its four questions a golden set graded by code | The statement fixes both; it gives retrieval a pass or fail that needs no model |
+| 2026-11-10 | The default context is smaller than the document | The contract fits in a prompt whole; otherwise retrieval would decide nothing |
