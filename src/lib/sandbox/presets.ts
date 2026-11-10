@@ -14,7 +14,20 @@ const lease: Sandbox & { id: PresetId } = {
   id: "lease",
   preset: true,
   documents: [{ name: "contrato-locacao-residencial.pdf", type: "pdf", url: "/samples/contrato-locacao-residencial.pdf" }],
-  settings: DEFAULT_SETTINGS,
+  // Measured on 2026-11-10 with the browser's embedder: at 300 characters
+  // the contract is 21 chunks and all four answers reach a context of four
+  // sources, about a fifth of the document (at 400 the landlord's name
+  // ranked fifth). The whole contract is some 1,200 tokens: a larger
+  // context would hold all of it and retrieval would decide nothing.
+  // The gate: answerable questions scored 0.873 or more, unrelated ones
+  // 0.788 to 0.839, one about a guarantor the contract does not have 0.815.
+  settings: {
+    ...DEFAULT_SETTINGS,
+    chunk: { strategy: "structure", size: 300, overlap: 40 },
+    retrieve: { ...DEFAULT_SETTINGS.retrieve, threshold: 0.82 },
+    context: { ...DEFAULT_SETTINGS.context, budget: 500 },
+  },
+  examples: ["Qual o prazo do contrato?", "Quem paga o IPTU?", "Qual a capital da França?"],
   golden: [
     { id: "landlord", question: "Qual o nome do Locador?", expect: "Carlos Henrique de Almeida", near: "LOCADOR" },
     { id: "tenant-cpf", question: "Qual o CPF do Locatário?", expect: "987.654.321-00" },

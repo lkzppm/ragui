@@ -34,4 +34,6 @@ export interface Sandbox {
   documents: SandboxDocument[];
   settings: Settings;
   golden: GoldenQuestion[];
+  /** More questions to try, offered beside the tests. The last is one the documents cannot answer. */
+  examples: string[];
 }
