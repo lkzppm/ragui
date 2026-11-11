@@ -59,10 +59,10 @@ What that means for the stages below:
 
 | Model | Languages | Dims | Token limit | `q8` download | Input prefix |
 |---|---|---|---|---|---|
-| `Xenova/multilingual-e5-small` (default) | about 100, Portuguese included | 384 | 512 | 118 MB | `query: ` for questions, `passage: ` for chunks |
+| `Xenova/multilingual-e5-small` (default) | about 100, Portuguese included | 384 | 512 | 135 MB (118 of weights, 17 of tokenizer; measured in the browser on 2026-11-11) | `query: ` for questions, `passage: ` for chunks |
 | `Xenova/all-MiniLM-L6-v2` (light) | English | 384 | 256 | 23 MB | none |
 
-- The default is the multilingual one (Decided by the assignment, 2026-11-10): the contract and the four questions are in Portuguese, and the light model is trained on English. 118 MB is a slow first visit on classroom Wi-Fi: the browser caches it afterwards and the download is shown as its own stage with a progress bar. The light model stays as a switch, mostly to show what a model does outside its language.
+- The default is the multilingual one (Decided by the assignment, 2026-11-10): the contract and the four questions are in Portuguese, and the light model is trained on English. 135 MB is a slow first visit on classroom Wi-Fi: the browser caches it afterwards and the download is shown as its own stage with a progress bar. The light model stays as a switch, mostly to show what a model does outside its language.
 - Default backend: **WASM with `q8`**, the combination that runs everywhere and gives the same numbers on every machine as far as we know (Unverified). WebGPU with `fp32` is a speed option; its vectors differ slightly from the WASM ones, which is why vectors are cached per `(model, dtype)` and never mixed in one index.
 - The prefix rule of E5 is part of the model, not a detail: a question embedded without `query: ` lands in a different place. The prefix is added in `embed/models.ts` and shown in the interface.
 - Shows: the vector as a strip of 384 cells (blue negative, red positive, or one hue by magnitude), tokens per chunk, embedded versus cached counts, milliseconds per chunk.
@@ -252,3 +252,20 @@ Query rewriting and HyDE (a model call before retrieval, which breaks principle 
 - Carbonell and Goldstein, "The use of MMR, diversity-based reranking for reordering documents and producing summaries", SIGIR 1998.
 - Wang et al., "Multilingual E5 Text Embeddings: A Technical Report", 2024. Model card: https://huggingface.co/intfloat/multilingual-e5-small
 - Lewis et al., "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", NeurIPS 2020.
+
+## Timing (2026-11-11)
+
+Lucas saw "0.0 ms" on every stage. Measured in Chromium: `performance.now()` moves in steps of 0.1 ms (the page is not cross-origin isolated), and on the contract every pure stage finishes in less than one step, so a single measurement read 0 or 0.1. Two other numbers were wrong for their own reasons: the load stage timed nothing (the file is read before `ingest` is called), and a question whose vector was already cached (every test question, since the tests embed them first) showed the time of a `Map` lookup as if it were the model's.
+
+What the code does now:
+
+- `timed(runtime, fn)` runs a pure stage once for its result and, when the runtime gives its clock's `resolution` and the call took less than ten steps of it, repeats the call until it has, reporting the mean. Sound only because the stages are pure. The lab measures its clock's step once (`clockResolution` in the store); `pnpm rag` gives no resolution and measures once, Node's clock being fine enough. The runs nobody watches (the sidebar's tests) do not repeat.
+- The load stage reports the time the documents took to be read (fetch and PDF parsing), carried on each `RawDoc`.
+- The `query` step says `cached`; the interface then shows "from cache" instead of a duration, as it does for an embed stage that embedded nothing new.
+- Durations are shown in the unit that fits: milliseconds from 1 ms, microseconds below.
+
+Seen on 2026-11-11 on the contract (21 passages), in the browser: load 100 ms, clean 47 µs, chunk 1.4 ms, embed 1.6 s, index 7 ms; question 18 ms (not cached), dense search 8.6 µs, keyword search 7.8 µs, fuse 2 µs, diversify 22 µs, gate under 1 µs, assemble 4.7 µs.
+
+## Neighbours (2026-11-11)
+
+`neighbours.ts`: `neighboursOf(vectors, dims, i, k)` is the dense search with a passage as the query, itself left out; `mesh(vectors, dims, k)` joins every passage to its `k` nearest and keeps each link once. Exact, all pairs. The map draws the mesh for up to 400 passages (k = 2) and the five nearest of the passage pointed at, with their cosines.

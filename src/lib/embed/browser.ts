@@ -4,7 +4,8 @@ import type { WorkerRequest, WorkerResponse } from "./worker";
 /**
  * The embedder in a Web Worker. Resolves once the model is in memory;
  * `onLoad` reports the download (bytes so far, bytes in all) on a first
- * visit, and is silent when the browser already has the files.
+ * visit, and is silent when the browser already has the files. A load
+ * that fails ends the worker, so trying again starts from a clean one.
  */
 export function browserEmbedder(model: EmbedModel, onLoad?: (loaded: number, total: number) => void): Promise<Embedder & { dispose: () => void }> {
   const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
@@ -12,12 +13,18 @@ export function browserEmbedder(model: EmbedModel, onLoad?: (loaded: number, tot
   let nextId = 1;
   const pending = new Map<number, { resolve: (items: Embedded[]) => void; reject: (error: Error) => void; onProgress?: (done: number, total: number) => void }>();
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, fail) => {
+    let ready = false;
+    const reject = (error: Error) => {
+      if (!ready) worker.terminate();
+      fail(error);
+    };
     worker.onerror = (event) => reject(new Error(event.message || "The embedding worker failed to start"));
     worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
       const message = event.data;
       if (message.type === "progress") onLoad?.(message.loaded, message.total);
       else if (message.type === "ready") {
+        ready = true;
         resolve({
           model,
           embed: (texts, kind, onProgress) =>

@@ -108,7 +108,7 @@ export function CorpusView({ index }: { index: Index }) {
           )}
         </header>
         <div ref={text} className="fade-y scrollbar-none min-h-0 flex-1 overflow-y-auto px-5 pt-3 pb-8" onPointerLeave={() => hover(null)}>
-          <p className="max-w-[68ch] text-[0.9375rem] leading-7 whitespace-pre-wrap" lang="pt-BR">
+          <p className="max-w-[68ch] text-[0.9375rem] leading-7 whitespace-pre-wrap">
             {runs.map((run) => {
               const shown = run.chunks.filter((chunk) => chunk - first < cut);
               const lit = hovered !== null && shown.includes(hovered);
@@ -164,7 +164,7 @@ export function CorpusView({ index }: { index: Index }) {
                 >
                   <div className="flex items-baseline gap-2">
                     <span className="num text-[0.6875rem] text-muted-foreground">#{chunk.index}</span>
-                    <span className="min-w-0 flex-1 truncate text-xs font-medium" lang="pt-BR">
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">
                       {chunk.title ?? chunk.text.slice(0, 40)}
                     </span>
                   </div>

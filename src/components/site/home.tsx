@@ -8,6 +8,7 @@ import { useT } from "@/i18n/LocaleProvider";
 import { BRAND } from "@/lib/brand";
 import { MODELS } from "@/lib/embed/models";
 import { DEFAULT_SETTINGS } from "@/lib/rag/settings";
+import { DEFAULT_PRESET } from "@/lib/sandbox/presets";
 import { STAGES, usesModel } from "@/lib/rag/stages";
 import { cn } from "@/lib/utils";
 import { BrandIcon } from "./brand-icon";
@@ -161,7 +162,7 @@ export function Home() {
               })}
             </ol>
             <Reveal delay={0.3} className="mt-14 flex justify-center">
-              <Link href="/lab" className={cn(BUTTON, "group bg-query text-query-foreground hover:opacity-90")}>
+              <Link href={`/lab/${DEFAULT_PRESET.id}`} className={cn(BUTTON, "group bg-query text-query-foreground hover:opacity-90")}>
                 {t.principles.cta}
                 <ArrowRight className="size-4 transition-transform duration-300 ease-[var(--ease)] group-hover:translate-x-0.5" aria-hidden />
               </Link>

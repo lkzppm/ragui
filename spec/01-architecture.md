@@ -1,6 +1,6 @@
 # 01 — Architecture
 
-Status on 2026-11-10: **built and running locally**: every stage of the pipeline, the embedder in a Web Worker, the answer route, the lab that replays a run, and the landing page ("As built" at the end). Not built: saving sandboxes (documents added by a visitor live in memory until the tab closes), and a deployment. What is described before "As built" is the design; where the code went another way, "As built" says so.
+Status on 2026-11-11: **built and running locally**: every stage of the pipeline, the embedder in a Web Worker, the answer route, the lab that replays a run, the landing page, and datasets kept in the browser. What is described before "As built" is the design; where the code went another way, "As built" and "Changed on 2026-11-11" (the last section) say so.
 
 ## What runs where
 
@@ -172,3 +172,19 @@ spec/  docs/
 | 2026-11-10 | The test questions run with the gate off | They grade retrieval; a threshold set too high would hide what the search found |
 | 2026-11-10 | Generation settings live on the server | A public route must not let a client raise the output limit or change the model |
 | 2026-11-10 | Dependencies load lazily (`@huggingface/transformers` and `unpdf` behind dynamic imports) | Neither is in the landing page's bundle or in the server's |
+
+## Changed on 2026-11-11: datasets, storage, timing
+
+**Routes.** `/lab` is the list of datasets (`components/lab/explorer.tsx`); `/lab/[id]` is the lab on one (`app/lab/[id]/page.tsx` hands the id to `<Lab id>`). An id is a preset's (`lease`) or eight characters of a UUID made in the browser. The server cannot know whether an id exists: the page always renders, and the store answers `missing` when the browser has no such dataset.
+
+**Storage** (`src/lib/sandbox/storage.ts`): one IndexedDB database `ragui`, one object store `sandboxes` keyed by id, holding `StoredSandbox { id, name, preset, docs, settings, history, createdAt, updatedAt }`. A dataset made by a visitor is stored whole (the text of its documents, not the files). A preset stores only its history: its documents and settings come from the app on every open. Without IndexedDB the same functions work on a `Map` for the life of the tab. **Vectors are not stored**: opening a dataset after a reload embeds it again (about a second for the contract; a large dataset would want the cache persisted, which is not built).
+
+**The store** (`src/lib/store/lab.ts`): `open(id)` replaces `boot()`. It resets what belongs to one dataset, reads the record or the preset, loads the embedder if it is not there, and indexes; a dataset with no documents rests in the phase `empty`. Opening the dataset that is already loaded returns at once, so leaving the lab and coming back finds the same run, answer and cursor. `close()` only writes what is unsaved; a stream in flight is left to finish. Saving is debounced (300 ms) and also runs on `pagehide`. `history` is the questions asked, the latest first, at most 50, each with whether the gate let it through. `retry()` opens the same dataset again after a failure.
+
+**The embedder** is loaded once and kept between datasets (`ensureEmbedder`). A download that stops is started again, three tries in all, before the failure is shown with a button to try again; a failed load terminates its worker. Measured in the browser on 2026-11-11: the first visit fetches 135 MB (118 of weights, 17 of tokenizer).
+
+**Timing** (`src/lib/rag/timing.ts`): see `02-rag-pipeline.md`, "Timing". `Runtime` gained `resolution`; `RawDoc` gained `ms` (how long reading it took, measured by whoever read it, which is what the load stage reports); the `query` step gained `cached`.
+
+**Where the visitor was** (`src/lib/store/last-lab.ts`): the last address inside the lab, in memory and in `sessionStorage`. The nav's Lab link points at it.
+
+**New in `src/lib/rag/`**: `neighbours.ts` (`neighboursOf`, `mesh`), pure, used by the map to draw the corpus as a graph.

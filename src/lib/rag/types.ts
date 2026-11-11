@@ -33,6 +33,8 @@ export interface RawDoc {
   name: string;
   type: DocType;
   text: string;
+  /** How long reading it took (fetching, parsing a PDF), measured by whoever read it. */
+  ms?: number;
 }
 
 /** A document after cleaning. Offsets everywhere refer to `text`. */
@@ -90,6 +92,12 @@ export interface Runtime {
   embedder: Embedder;
   /** Milliseconds, for the durations in the trace. */
   now: () => number;
+  /**
+   * The smallest step `now` can show, when that is coarse (a browser rounds
+   * its clock to 0.1 ms or more). Given it, a stage too short to be seen by
+   * the clock is timed over repeated calls (`timed`).
+   */
+  resolution?: number;
   /** Vectors already computed, by model, precision and text. */
   cache: Map<string, Embedded>;
 }
@@ -203,7 +211,7 @@ export type Step =
   | { kind: "chunk"; strategy: ChunkStrategy; size: number; overlap: number; count: number; perDoc: number[]; ms: number }
   | { kind: "embed"; model: EmbedModel; embedded: number; cached: number; tokens: number; truncated: number; ms: number }
   | { kind: "index"; chunks: number; dims: number; terms: number; ms: number }
-  | { kind: "query"; text: string; tokens: number; vector: Float32Array; point: [number, number]; ms: number }
+  | { kind: "query"; text: string; tokens: number; vector: Float32Array; point: [number, number]; /** The vector was already known: the model did not run. */ cached: boolean; ms: number }
   | { kind: "dense"; hits: Hit[]; scores: Float32Array; scanned: number; ms: number }
   | { kind: "sparse"; terms: TermStat[]; hits: SparseHit[]; ms: number }
   | { kind: "fuse"; mode: RetrieveMode; k: number; hits: FusedHit[]; ms: number }

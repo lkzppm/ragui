@@ -46,8 +46,10 @@ const settings: Settings = {
 const raw: RawDoc[] = [];
 for (const document of sandbox.documents) {
   if (!document.url) continue;
+  const started = performance.now();
   const bytes = new Uint8Array(await readFile(`public${document.url}`));
-  raw.push({ name: document.name, type: document.type, text: document.type === "pdf" ? (await pdfText(bytes)).text : new TextDecoder().decode(bytes) });
+  const text = document.type === "pdf" ? (await pdfText(bytes)).text : new TextDecoder().decode(bytes);
+  raw.push({ name: document.name, type: document.type, text, ms: performance.now() - started });
 }
 
 const runtime: Runtime = { embedder: await nodeEmbedder(modelOf(settings.embed)), now: () => performance.now(), cache: new Map() };
