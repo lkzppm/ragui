@@ -197,7 +197,6 @@ pnpm rag ingest                                       # the indexing trace and e
 pnpm rag eval                                         # the sandbox's test questions: ranks, recall, MRR
 pnpm rag ask '<question>'                             # the query trace, no model call
 pnpm rag ask '<question>' --answer                    # also calls Groq
-pnpm rag figure                                       # rewrites the landing page's figure from real runs
 # options: --strategy --size --overlap --mode --k --lambda --sources --budget --threshold (a number, or off)
 ```
 

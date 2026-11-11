@@ -10,7 +10,8 @@ A sandbox for building a RAG about any subject, where the pipeline is the interf
 
 - 2026-11-10: **it works locally.** The whole pipeline runs in the browser (embedder in a Web Worker), Groq writes the answer through `/api/answer`, the lab replays every run, and the landing page has its WebGPU background. The statement's four questions are answered correctly, with citations. `spec/05-roadmap.md` says what was run and what was not; `spec/02-rag-pipeline.md` ("Measured") has the numbers.
 - 2026-11-11: **datasets.** `/lab` lists the datasets (the example, and the ones a visitor makes, kept in IndexedDB with their documents, settings and the questions asked); `/lab/[id]` is the lab on one. The interface says "dataset"; the code's type is still `Sandbox`. Lucas saw the lab that day and asked for this and for the changes listed at the end of `spec/03-ui-design.md`. The look is still his to refine.
-- Not built: writing test questions or instructions for one's own dataset, renaming or copying one, keeping vectors between visits (a dataset is embedded again after a reload), a deployment, tests.
+- Not built: writing test questions or instructions for one's own dataset, renaming or copying one, keeping vectors between visits (a dataset is embedded again after a reload), tests.
+- 2026-11-11: **deployed** at https://rag-ui-ufrj.vercel.app (Vercel project `rag-ui-ufrj`, production from `main`). `GROQ_API_KEY` is not set there yet: generation is off on the live site until Lucas adds it (`spec/04-stack-and-versions.md`).
 - **Delivery in about a month** (Lucas, 2026-11-10), so around 2026-12-10. The exact date and what is handed in are not confirmed.
 - The assignment was read on 2026-11-10 (`spec/00-overview.md`). **The acceptance test is its four questions on the contract**: the landlord's name, the tenant's CPF, the property's address, the rent. The expected answers and the decoys around each are in the spec. The deadline and what is handed in are not in the statement: ask Lucas.
 - The contract is published at `public/samples/contrato-locacao-residencial.pdf` (Lucas approved it on 2026-11-10). The statement (`.doc`) stays in `docs/assignment/`, git-ignored: it was not part of that approval.
@@ -25,7 +26,7 @@ pnpm lint && pnpm typecheck && pnpm build   # must be green (CI enforces)
 pnpm exec vgpu check src/components/field/<name>.wgsl
 pnpm rag eval                               # the sample's test questions: is each answer retrieved?
 pnpm rag ask '<question>' [--answer]        # the query trace; --answer also calls Groq
-pnpm rag ingest · pnpm rag figure           # every chunk · rewrite the landing page's figure
+pnpm rag ingest                             # every chunk
 ```
 
 Generation needs `GROQ_API_KEY` in `.env` (Lucas has one there). In development the lab's store is `window.lab`. To look at pages without a browser window, see "Driving it without a browser window" in `spec/04-stack-and-versions.md`.
@@ -52,7 +53,7 @@ Generation needs `GROQ_API_KEY` in `.env` (Lucas has one there). In development 
 - Motion uses the springs in `src/lib/motion.ts` (critically damped by default; `SPRING_DROP` only for things that land). Pressable things carry the `press` utility; floating chrome is `glass`. Honour reduced motion, reduced transparency and more contrast (the rules are at the end of `globals.css`).
 - **Node and the browser give slightly different vectors** for the same text, enough to swap two neighbouring passages. A setting that passes `pnpm rag eval` may fail in the lab and the reverse: confirm in the browser (the sidebar's tests).
 - `normalizeCitations` exists because `gpt-oss` writes `【4】` whatever the prompt says. Keep it.
-- `src/components/site/figure-data.json` is written by `pnpm rag figure`. Regenerate it after changing the sample's settings or the pipeline; never edit it by hand.
+- The landing page's figure (`site/home-pipeline.tsx`) explains the pipeline from `STAGES`, `RAIL` and the dictionaries; it shows no run and no sandbox's data (Lucas, 2026-11-11).
 - vgpu is pinned at 0.5.0 like the sister projects. The field's uniform arrays (`132` points, `14` links) must match `POINTS` and `LINKS` in `space.ts`; run `vgpu check` after touching a shader.
 - Dependencies are added by the step that first imports them. pnpm refuses packages published in the last day; do not add exceptions to `pnpm-workspace.yaml` to get a newer one (this is why Next is 16.4.5 and not 16.4.6).
 - Colours come from the tokens in `src/app/globals.css`, never a hex value in a component. Animate `transform` and `opacity`; respect `prefers-reduced-motion`.

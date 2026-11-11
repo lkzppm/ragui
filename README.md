@@ -4,7 +4,7 @@ A sandbox for building a RAG about anything, where the pipeline is the interface
 
 A UFRJ course project (Inteligência Artificial, 2026/2): the "Busca Semântica" part of the final assignment, which asks for a RAG that answers four questions about a residential lease contract. RAGui does that, and takes any other document too.
 
-> **Status (2026-11-10): works locally, not deployed yet.** The sample sandbox (a residential lease and four questions about it) indexes in the browser and answers with citations. Saving your own sandboxes is next. Details in [`spec/05-roadmap.md`](spec/05-roadmap.md).
+> **Status (2026-11-11): live at https://rag-ui-ufrj.vercel.app.** Make a dataset from your own documents or open the example (a residential lease and four questions about it): it is indexed in the browser and searched there. Answers need a Groq key on the server, which the live site does not have yet. Details in [`spec/05-roadmap.md`](spec/05-roadmap.md).
 
 ## Run it
 

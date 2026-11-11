@@ -16,11 +16,20 @@ Done today, in order:
 - [x] **The lab**: one fixed screen that replays a run (rail, corpus view, retriever view, answer panel, transport, settings that take effect at once, test questions graded by code, documents added by drop or button).
 - [x] **The landing page**: three screens, a WebGPU background through vgpu, a figure of real runs.
 
+On 2026-11-11, from Lucas's first look at the landing page:
+
+- [x] The caption under the hero's field is gone. The mark answers the pointer (lines to its four passages, which turn and come closer).
+- [x] The second screen's figure explains the pipeline stage by stage, from `STAGES`, `RAIL` and the dictionaries, instead of showing runs of the sample. `pnpm rag figure`, `figure-data.json` and `home-figure.tsx` were removed with it.
+- [x] The third screen has an animated background, a page of cells (`cells.wgsl`, a fourth shader in CI's `vgpu check`). Its Portuguese headline says "computado", and so do the two other strings that said "calcula".
+- [x] A four-column footer like Debait's, with LinkedIn and the course code `EEL874`.
+- Seen by Claude in headless Chromium with WebGPU on, at 1440 px in both themes and both languages and at 390 px: the mark under a synthetic pointer, the figure moving on by itself, holding under the pointer and following it, the cells following the question, the footer; and with reduced motion, the figure staying put and the cells at rest. Not seen: a real browser, a real pointer, how the motion feels.
+
 Not done:
 
 - [x] Lucas saw the lab on 2026-11-11 and asked for a list of changes, built the same day (`03-ui-design.md`, last section). He has not yet seen those.
 - [x] Datasets (2026-11-11): the lab opens on a list; a visitor makes, opens and deletes datasets, each kept in IndexedDB with its documents, settings and question history. Still missing: writing test questions and instructions for one's own dataset, renaming and copying, keeping vectors between visits.
-- [ ] No Vercel project.
+- [x] Deployed on 2026-11-11: Vercel project `rag-ui-ufrj`, production from `main`, https://rag-ui-ufrj.vercel.app. Seen by Claude in a fresh browser profile: the datasets screen, the example indexing and its four tests passing, a question retrieved up to the prompt.
+- [ ] `GROQ_API_KEY` is not set on Vercel: generation is off on the live site. Lucas adds it; who may spend the quota is still open question 2.
 - [ ] No unit tests.
 
 What was actually run, and what was not:
@@ -28,7 +37,7 @@ What was actually run, and what was not:
 | | State |
 |---|---|
 | `pnpm lint`, `pnpm typecheck`, `pnpm build`, `vgpu check` on the three shaders | pass |
-| `pnpm rag ingest / eval / ask / ask --answer / figure` | ran; the numbers are in `02-rag-pipeline.md` |
+| `pnpm rag ingest / eval / ask / ask --answer` | ran; the numbers are in `02-rag-pipeline.md` |
 | The four questions end to end with Groq (`openai/gpt-oss-120b`) | correct, with valid citations: in the terminal, in the development server and in the production build (`pnpm build && pnpm start`) |
 | The lab in a browser | headless Chromium, driven by script: indexing, a question, a closed gate, a settings change with re-indexing from cache, stepping, the language and theme switches, at 1440, 1280 and 390 px, both themes, both languages |
 | The landing page | the same way: WebGPU on (animating, following a synthetic pointer, a ring after a click) and off (the still frame) |

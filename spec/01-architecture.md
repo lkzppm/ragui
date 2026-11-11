@@ -85,7 +85,7 @@ All in the browser, in IndexedDB (documents and vectors are too large for `local
 ```
 src/
   app/
-    layout.tsx  globals.css  page.tsx        landing: name, one sentence, a live figure
+    layout.tsx  globals.css  page.tsx        landing: name, one sentence, the pipeline explained
     lab/page.tsx                             the app
     api/answer/route.ts                      the only server code
   lib/
@@ -148,7 +148,7 @@ spec/  docs/
 - `src/lib/answer/`: `groq.ts` (the one model call, server only), `protocol.ts` (what the route streams: the text, then U+001E, then one JSON object with the model, the token usage and why it stopped, or the error).
 - `src/app/api/answer/route.ts`: `GET` says whether generation is available and with which model; `POST` validates with zod, builds the prompt with `buildPrompt` and streams. Generation settings are the server's, never the client's.
 - `src/lib/sandbox/`: `Sandbox`, and the `lease` preset with its measured settings, the statement's four questions and three more examples.
-- `scripts/rag.mts`: `pnpm rag ingest | eval | ask | figure`.
+- `scripts/rag.mts`: `pnpm rag ingest | eval | ask`.
 
 ### The replay (`src/lib/store/`)
 
@@ -160,7 +160,7 @@ spec/  docs/
 
 ### Interface
 
-`components/pipeline/` (the rail), `components/lab/` (the screen, the sidebar, the stage, the answer panel, the bottom bar), `components/corpus/` (the document with its passages, vector strips), `components/retriever/` (the map, the three rankings, the context tray), `components/field/` (the landing page's WebGPU background), `components/site/` (top bar, footer, landing page and its figure). `03-ui-design.md` describes them.
+`components/pipeline/` (the rail), `components/lab/` (the screen, the sidebar, the stage, the answer panel, the bottom bar), `components/corpus/` (the document with its passages, vector strips), `components/retriever/` (the map, the three rankings, the context tray), `components/field/` (the landing page's two WebGPU backgrounds), `components/site/` (top bar, footer, landing page and its figure). `03-ui-design.md` describes them.
 
 ### Decisions made while building
 
