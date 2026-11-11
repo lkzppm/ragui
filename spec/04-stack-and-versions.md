@@ -67,11 +67,10 @@ Proposed default: `openai/gpt-oss-120b`, as in the sister projects. `llama-3.3-7
 ```
 pnpm dev                                    # the whole app; generation needs GROQ_API_KEY in .env
 pnpm lint && pnpm typecheck && pnpm build   # what CI runs (typecheck = next typegen + tsc)
-pnpm exec vgpu check src/components/field/field.wgsl   # and points.wgsl, links.wgsl
+pnpm exec vgpu check src/components/field/field.wgsl   # and points.wgsl, links.wgsl, cells.wgsl
 pnpm rag ingest                             # the indexing trace and every chunk of the sample
 pnpm rag eval                               # its test questions: ranks, recall, MRR
 pnpm rag ask '<question>' [--answer]        # the query trace; --answer also calls Groq
-pnpm rag figure                             # rewrites the landing page's figure from real runs
 ```
 
 In development the lab's store is on `window.lab` (`window.lab.getState().ask("…", "pt")`, `.update({ chunk: { size: 300 } })`, `.tests`).
@@ -81,9 +80,9 @@ In development the lab's store is on `window.lab` (`window.lab.getState().ask("�
 ## Repository and deployment
 
 - **Repository**: `lkzppm/ragui`, public, created on 2026-11-10. Branches `main` ← `dev` ← `feat/*` or `fix/*`; commit with `/commit`, integrate with `/merge`.
-- **CI** (`.github/workflows/ci.yml`): lint, typecheck, the three shaders through `vgpu check`, and build, on pushes and pull requests to `main` and `dev`, Node 24, one job named `lint · types · build`.
+- **CI** (`.github/workflows/ci.yml`): lint, typecheck, the four shaders through `vgpu check`, and build, on pushes and pull requests to `main` and `dev`, Node 24, one job named `lint · types · build`.
 - **Branch rules** (set on 2026-11-10, copied from Debait): a ruleset on `main` requires a pull request and the `lint · types · build` check, and blocks deletion and force pushes; one on `dev` requires the check and blocks deletion and force pushes. Auto-merge and delete-branch-on-merge are on, so `/merge` arms auto-merge and the merge lands when CI is green, and a merged feature branch is removed on GitHub. The two pull requests before the scaffold were merged by hand: there was no CI then, and the `/merge` helper script stops when a repository reports no checks at all.
-- **Vercel**: not created. Production will track `main`; every pull request gets a preview. In Debait the Vercel MCP connection was read-only on the team and the CLI did the work (`vercel project add`, `vercel link`, `vercel git connect`, `vercel env add`).
+- **Vercel** (2026-11-11): project `rag-ui-ufrj` in Lucas's team, connected to `lkzppm/ragui` with the CLI (`vercel project add`, `vercel link`, `vercel git connect`). Production tracks `main` and is at https://rag-ui-ufrj.vercel.app; every pull request gets a preview. **`GROQ_API_KEY` is not set there yet**, so on the live site generation is off and everything up to the prompt works; Lucas adds it with `vercel env add GROQ_API_KEY production` and redeploys. Whoever has the address can then spend the key's free quota: `ACCESS_CODE` exists on the route but the interface has no field to type it. `vercel link` wrote a git-ignored `.env.local` holding only a Vercel token. Web Analytics (`@vercel/analytics` 2.0.1, `<Analytics />` in the root layout) counts page views once it is enabled for the project in Vercel's dashboard.
 
 ## Lessons inherited (observed in CV-AI and Debait, October 2026)
 

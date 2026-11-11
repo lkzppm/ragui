@@ -124,7 +124,6 @@ export const en = {
     sentence: "A sandbox for building a RAG about anything, with every step of the pipeline on screen.",
     open: "Open the lab",
     discover: "How it works",
-    field: "Your pointer is the question. The lines go to the passages nearest to it.",
   },
 
   how: {
@@ -136,13 +135,8 @@ export const en = {
       dims: "numbers describe each passage",
       servers: "servers used to index and search: it runs in your browser",
     },
-    figure: {
-      note: "A real run on the sample contract, computed by the same code as the lab.",
-      dense: "By meaning",
-      sparse: "By words",
-      fused: "Together",
-      found: "holds the answer",
-    },
+    /** What the figure is, for a screen reader. */
+    figure: "The pipeline, stage by stage",
   },
 
   principles: {
@@ -353,8 +347,15 @@ export const en = {
   knobs,
 
   footer: {
-    by: "by",
-    course: (name: string, school: string, term: string) => `${name}, ${school} ${term}`,
+    project: "Project",
+    licence: "MIT licensed",
+    stack: "Stack",
+    author: "Author",
+    github: "GitHub",
+    linkedin: "LinkedIn",
+    course: "Course",
+    courseName: "Artificial Intelligence",
+    copyright: "© 2026",
   },
 
   notFound: {

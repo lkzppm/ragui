@@ -4,7 +4,6 @@
 //   pnpm rag eval                       the sandbox's test questions: is each answer retrieved?
 //   pnpm rag ask '<question>'           the query trace, no model call
 //   pnpm rag ask '<question>' --answer  also asks Groq (needs GROQ_API_KEY)
-//   pnpm rag figure                     rewrites the landing page's figure from real runs
 //
 // Options: --size N --overlap N --strategy fixed|recursive|structure --mode dense|sparse|hybrid
 //          --k N --sources N --budget N --lambda X --threshold X
@@ -126,28 +125,6 @@ if (command === "ingest") {
     for (const citation of check.citations) console.log(`  sentence ${citation.sentence + 1} cites [${citation.n}]: ${citation.valid ? `valid, support ${citation.support === null ? "–" : `${Math.round(citation.support * 100)}%`}` : "INVALID"}`);
     if (check.uncited.length) console.log(`  uncited sentences: ${check.uncited.map((i) => i + 1).join(", ")}`);
   }
-} else if (command === "figure") {
-  // The landing page's figure: real runs of the sample's test questions, kept small.
-  const { writeFile } = await import("node:fs/promises");
-  const runs = [];
-  for (const test of sandbox.golden) {
-    const run = await ask(index, test.question);
-    const { holders } = grade(index, test, run);
-    const title = (chunk: number) => index.chunks[chunk].title ?? index.chunks[chunk].text.slice(0, 40);
-    const row = (hit: { chunk: number; rank: number; score: number }) => ({ chunk: hit.chunk, title: title(hit.chunk), score: Number(hit.score.toFixed(4)), holder: holders.includes(hit.chunk) });
-    const kept = new Set(stepOf(run, "diversify")!.kept.map((hit) => hit.chunk));
-    runs.push({
-      id: test.id,
-      question: test.question,
-      expect: test.expect,
-      dense: stepOf(run, "dense")!.hits.slice(0, 5).map(row),
-      sparse: stepOf(run, "sparse")!.hits.slice(0, 5).map(row),
-      fused: stepOf(run, "fuse")!.hits.slice(0, 5).map((hit) => ({ ...row(hit), denseRank: hit.denseRank, sparseRank: hit.sparseRank, kept: kept.has(hit.chunk) })),
-    });
-  }
-  const out = { model: settings.embed.model, chunks: index.chunks.length, sources: settings.context.sources, runs };
-  await writeFile("src/components/site/figure-data.json", `${JSON.stringify(out, null, 2)}\n`);
-  console.log(`wrote src/components/site/figure-data.json (${runs.length} runs over ${index.chunks.length} chunks)`);
 } else {
   throw new Error(`Unknown command: ${command}`);
 }

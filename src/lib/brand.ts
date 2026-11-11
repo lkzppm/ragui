@@ -11,9 +11,11 @@ export const BRAND = {
   author: {
     name: "Lucas Pacheco",
     github: "https://github.com/lkzppm",
+    linkedin: "https://www.linkedin.com/in/lucasppmc/",
   },
+  /** The course this was made for. Its name is in the dictionaries, since it is translated. */
   course: {
-    name: "Inteligência Artificial",
+    code: "EEL874",
     school: "UFRJ",
     term: "2026/2",
   },

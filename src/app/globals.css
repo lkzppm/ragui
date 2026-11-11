@@ -224,6 +224,54 @@
     transform: none;
   }
 
+  /* The mark (`site/logo.tsx`). At rest: four passages, a question, the ring
+     of a search. Under the pointer the search happens: the ring widens, a
+     line grows from the question to each passage, and the passages turn a
+     little and come closer, in the question's colour. Transitions, not
+     keyframes, so leaving halfway turns it back from where it is. */
+  .mark-orbit,
+  .mark-link,
+  .mark-node,
+  .mark-ring {
+    transform-box: view-box;
+    transform-origin: 16px 16px;
+    transition:
+      transform 0.7s var(--ease),
+      opacity 0.35s var(--ease),
+      fill 0.35s var(--ease);
+  }
+  .mark-node {
+    fill: var(--corpus);
+  }
+  .mark-ring {
+    stroke: var(--query);
+    opacity: 0.5;
+  }
+  .mark-link {
+    stroke: var(--query);
+    opacity: 0;
+    transform: scale(0);
+  }
+  :is(.mark:hover, .mark-host:hover .mark, .mark-host:focus-visible .mark) {
+    .mark-orbit {
+      transform: rotate(14deg);
+    }
+    .mark-node {
+      fill: var(--query);
+      transform: translate(var(--dx), var(--dy));
+    }
+    .mark-ring {
+      opacity: 0.3;
+      transform: scale(1.25);
+    }
+    /* One after the other, the way a ranking is read. */
+    .mark-link {
+      opacity: 0.75;
+      transform: scale(var(--reach));
+      transition-delay: calc(var(--i) * 50ms);
+    }
+  }
+
   /* The range input, drawn to match: a hairline track, a filled part, a thumb that grows under the finger. */
   .slider {
     appearance: none;
@@ -310,6 +358,16 @@
   .reveal {
     transform: none;
     transition: opacity 0.3s ease;
+  }
+  /* The mark's lines and colour still answer the pointer; nothing travels. */
+  .mark-orbit,
+  .mark-node,
+  .mark-ring {
+    transform: none !important;
+  }
+  .mark-link {
+    transform: none !important;
+    transition-delay: 0s !important;
   }
   *,
   *::before,
