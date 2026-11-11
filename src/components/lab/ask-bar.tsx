@@ -3,36 +3,37 @@
 import { ArrowUp, Pause, Play, RotateCcw, SkipBack, SkipForward } from "lucide-react";
 import { AnimatePresence, motion, useMotionValueEvent } from "motion/react";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Segmented } from "@/components/site/segmented";
 import { useLocale } from "@/i18n/LocaleProvider";
 import { SPRING } from "@/lib/motion";
 import { useLab } from "@/lib/store/lab";
-import { cursor, SLOTS } from "@/lib/store/playhead";
+import { cursor, INGEST_SLOTS, SLOTS } from "@/lib/store/playhead";
 import { cn } from "@/lib/utils";
 import { IconButton } from "./controls";
 
-const SPEEDS = ["0.5", "1", "2", "max"] as const;
-type SpeedKey = (typeof SPEEDS)[number];
-const SPEED_VALUE: Record<SpeedKey, number> = { "0.5": 0.5, "1": 1, "2": 2, max: Infinity };
+/** Where indexing ends and the question begins, as a share of the scrubber. */
+const SPLIT = INGEST_SLOTS / SLOTS.length;
+/** The width of the scrubber's thumb: its centre travels the track less half of this at each end. */
+const THUMB = 14;
 
 /**
  * The bottom bar: the question on the left, the transport on the right.
- * The scrubber is the run from loading to the checked answer; dragging it
- * moves the cursor directly, and everything on screen follows.
+ * The scrubber is the run from loading to the checked answer, in the same
+ * two parts as the rail above: indexing, then the question. Dragging it
+ * moves the cursor directly, and everything on screen follows. It goes no
+ * further than what has been computed, so with no question asked it stops
+ * at the mark between the two parts.
  */
 export function AskBar({ className }: { className?: string }) {
   const { t, locale } = useLocale();
   const a = t.lab.ask;
-  const sandbox = useLab((state) => state.sandbox);
+  const empty = useLab((state) => state.phase === "empty");
   const ready = useLab((state) => Boolean(state.index));
-  const question = useLab((state) => state.question);
+  const asked = useLab((state) => Boolean(state.queryTrace));
   const playing = useLab((state) => state.playing);
-  const speed = useLab((state) => state.speed);
   const limit = useLab((state) => state.limit);
   const reached = useLab((state) => state.reached);
   const ask = useLab((state) => state.ask);
   const setPlaying = useLab((state) => state.setPlaying);
-  const setSpeed = useLab((state) => state.setSpeed);
   const seek = useLab((state) => state.seek);
   const step = useLab((state) => state.step);
   const [draft, setDraft] = useState("");
@@ -75,34 +76,9 @@ export function AskBar({ className }: { className?: string }) {
   };
   const atEnd = reached >= Math.floor(limit) && cursor.get() >= limit - 0.001;
   const moving = playing && !atEnd;
-  const speedKey = (SPEEDS.find((key) => SPEED_VALUE[key] === speed) ?? "1") as SpeedKey;
-  const suggestions = [...sandbox.golden.map((test) => test.question), ...sandbox.examples].filter((text) => text !== question);
 
   return (
-    <div className={cn("flex flex-col gap-2 border-t border-border bg-card px-4 py-3 sm:px-5", className)}>
-      <div className="scrollbar-none fade-x -mr-4 flex items-center gap-1.5 overflow-x-auto pr-8 sm:-mr-5">
-        <span className="eyebrow shrink-0 pr-1">{a.examples}</span>
-        <AnimatePresence initial={false} mode="popLayout">
-          {suggestions.map((text) => (
-            <motion.button
-              key={text}
-              type="button"
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={SPRING}
-              disabled={!ready}
-              onClick={() => submit(text)}
-              className="press h-7 shrink-0 rounded-full border border-border px-3 text-xs whitespace-nowrap text-muted-foreground hover:border-foreground/30 hover:text-foreground disabled:opacity-40"
-              lang="pt-BR"
-            >
-              {text}
-            </motion.button>
-          ))}
-        </AnimatePresence>
-      </div>
-
+    <div className={cn("border-t border-border bg-card px-4 py-3 sm:px-5", className)}>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <form
           className="group relative flex min-w-[16rem] flex-1 items-center"
@@ -115,7 +91,7 @@ export function AskBar({ className }: { className?: string }) {
             ref={input}
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder={ready ? a.placeholder : a.notReady}
+            placeholder={ready ? a.placeholder : empty ? a.empty : a.notReady}
             disabled={!ready}
             maxLength={600}
             // 16px keeps iOS Safari from zooming into the field.
@@ -154,20 +130,40 @@ export function AskBar({ className }: { className?: string }) {
           </IconButton>
         </div>
 
-        <input
-          ref={scrubber}
-          type="range"
-          aria-label={a.scrub}
-          className="slider is-query w-32 flex-1 sm:max-w-56"
-          min={0}
-          max={SLOTS.length}
-          step={0.001}
-          defaultValue={0}
-          style={{ "--fill": "0%" } as CSSProperties}
-          onInput={(event) => seek(Number(event.currentTarget.value))}
-        />
-
-        <Segmented label={a.speed} value={speedKey} onChange={(key) => setSpeed(SPEED_VALUE[key])} options={SPEEDS.map((key) => ({ value: key, label: key === "max" ? "⚡" : `${key}×`, title: key === "max" ? a.instant : undefined }))} />
+        <div className="flex w-44 flex-1 flex-col sm:max-w-72">
+          <div className="pointer-events-none flex h-3.5 items-start text-[0.5625rem] leading-none" style={{ paddingInline: THUMB / 2 }} aria-hidden>
+            <span className="eyebrow truncate text-[length:inherit]" style={{ width: `${SPLIT * 100}%` }}>
+              {t.lab.groups.ingest.name}
+            </span>
+            <span className={cn("eyebrow min-w-0 flex-1 truncate pl-1.5 text-[length:inherit] transition-opacity duration-300", !asked && "opacity-40")}>{t.lab.groups.query.name}</span>
+          </div>
+          <div className="relative flex">
+            <input
+              ref={scrubber}
+              type="range"
+              aria-label={a.scrub}
+              className="slider is-query"
+              min={0}
+              max={SLOTS.length}
+              step={0.001}
+              defaultValue={0}
+              style={{ "--fill": "0%" } as CSSProperties}
+              onInput={(event) => {
+                seek(Number(event.currentTarget.value));
+                // The cursor stops at what has been computed; the thumb is put back where the cursor really is.
+                paint(cursor.get());
+              }}
+            />
+            {/* With no question asked there is nothing to scrub in the second part: it is drawn fainter. */}
+            <span
+              className={cn("pointer-events-none absolute inset-y-0 right-0 bg-card transition-opacity duration-300", asked ? "opacity-0" : "opacity-65")}
+              style={{ left: `calc(${THUMB + 1}px + (100% - ${THUMB}px) * ${SPLIT})` }}
+              aria-hidden
+            />
+            {/* The mark between indexing and the question. */}
+            <span className="pointer-events-none absolute top-1/2 h-2.5 w-px -translate-y-1/2 bg-foreground/45" style={{ left: `calc(${THUMB / 2}px + (100% - ${THUMB}px) * ${SPLIT})` }} aria-hidden />
+          </div>
+        </div>
       </div>
     </div>
   );

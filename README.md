@@ -16,7 +16,7 @@ cp .env.example .env    # add a free Groq key: https://console.groq.com/keys
 pnpm dev                # http://localhost:3000
 ```
 
-Without a key everything up to the prompt still works: documents are read, cut, embedded and searched in your browser, and the lab shows the exact prompt that would be sent. The first visit downloads the embedding model (about 118 MB), which the browser then keeps.
+Without a key everything up to the prompt still works: documents are read, cut, embedded and searched in your browser, and the lab shows the exact prompt that would be sent. The first visit downloads the embedding model (about 135 MB), which the browser then keeps.
 
 Open `/lab`, click one of the test questions on the left, and watch the run. Then change the chunk size or the search mode and see which answers are still found.
 
