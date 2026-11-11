@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
@@ -37,6 +38,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Nav />
           {children}
         </LocaleProvider>
+        {/* Vercel Web Analytics: page views, no cookies. It does nothing outside a Vercel deployment. */}
+        <Analytics />
       </body>
     </html>
   );
