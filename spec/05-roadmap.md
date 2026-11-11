@@ -18,8 +18,8 @@ Done today, in order:
 
 Not done:
 
-- [ ] **Lucas has not seen any of it.** The look, the motion and the wording are a first pass.
-- [ ] Sandboxes are not saved: there is one (the sample), its settings reset on reload, and documents a visitor adds live until the tab closes. No naming, no switching, no instructions field, no writing one's own test questions.
+- [x] Lucas saw the lab on 2026-11-11 and asked for a list of changes, built the same day (`03-ui-design.md`, last section). He has not yet seen those.
+- [x] Datasets (2026-11-11): the lab opens on a list; a visitor makes, opens and deletes datasets, each kept in IndexedDB with its documents, settings and question history. Still missing: writing test questions and instructions for one's own dataset, renaming and copying, keeping vectors between visits.
 - [ ] No Vercel project.
 - [ ] No unit tests.
 
@@ -32,7 +32,7 @@ What was actually run, and what was not:
 | The four questions end to end with Groq (`openai/gpt-oss-120b`) | correct, with valid citations: in the terminal, in the development server and in the production build (`pnpm build && pnpm start`) |
 | The lab in a browser | headless Chromium, driven by script: indexing, a question, a closed gate, a settings change with re-indexing from cache, stepping, the language and theme switches, at 1440, 1280 and 390 px, both themes, both languages |
 | The landing page | the same way: WebGPU on (animating, following a synthetic pointer, a ring after a click) and off (the still frame) |
-| A first visit that downloads the model in the browser | **not seen**: the test browser's cache already had it after the first run, whose progress bar was not looked at. In Node the first download took about 100 s |
+| A first visit that downloads the model in the browser | seen on 2026-11-11 in a fresh profile: 135 MB, ready in 10 s on a fast connection. An earlier try the same day failed at 102 of 135 MB after six minutes ("network error"), which is why a stopped download is now retried three times and the failure has a button |
 | A real browser, a real phone, touch, Safari, Firefox | **not run** |
 | Dropping or picking a file to add a document | **not run** (the code path shares `readDoc` and `reindex` with the sample, which run) |
 | A PDF other than the contract; a long document; another language | **not run** |
@@ -42,7 +42,7 @@ What was actually run, and what was not:
 ## Next (Proposed)
 
 1. **Lucas looks at it** (`pnpm dev`, then `/` and `/lab`) and says what to change. Everything visual is expected to move.
-2. **Sandboxes**: IndexedDB; make, name, switch, copy the sample, delete; an instructions field (the prompt already takes one); writing test questions; defaults for long documents. This is what makes it the generic tool and must not wait for the last week.
+2. **Datasets, the rest**: an instructions field (the prompt already takes one); writing test questions; renaming and copying; keeping vectors between visits so a large dataset does not embed again on every reload; defaults for long documents.
 3. **A second sample with a long document**, where retrieval is needed rather than demonstrated.
 4. **The public deployment's key**: decide who pays for generation (open question 2), then Vercel: project, env vars, production on `main`.
 5. **Real devices**: a phone, Safari, Firefox; a first visit on a slow connection; reduced motion in the lab's replay.
@@ -70,6 +70,6 @@ Settled on 2026-11-10: the sample (the contract, published), the embedding model
 | The browser's vectors differ from Node's, and may differ again between browsers or after a library update | Tune and check in the browser that will be used; `pnpm rag eval` is a guide, not a proof |
 | The ONNX runtime and the model are fetched from jsDelivr and Hugging Face at run time | Open the site beforehand on the demo machine; consider serving both from the app |
 | Other people's documents break assumptions made on the contract (scanned PDFs with no text, very long files, other languages) | Say what is not supported instead of failing silently: a PDF with no extractable text is reported as such; a size limit per sandbox with the reason shown |
-| 118 MB on classroom Wi-Fi during a live demo | Open the site beforehand so the model is cached; a recorded backup |
+| 135 MB on classroom Wi-Fi during a live demo | Open the site beforehand so the model is cached; a recorded backup |
 | The free tier runs out in front of the class | The gate, the small budget, and the fact that everything but the last sentence needs no model |
 | The animation drifts from the truth (a hand-tuned effect that no longer matches the numbers) | Principle 2: views draw `(trace, playhead)` and nothing else |
