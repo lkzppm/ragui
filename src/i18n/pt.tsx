@@ -25,7 +25,6 @@ export const pt: Dictionary = {
     sentence: "Um sandbox para montar um RAG sobre qualquer assunto, com cada etapa do pipeline na tela.",
     open: "Abrir o laboratório",
     discover: "Como funciona",
-    field: "O seu ponteiro é a pergunta. As linhas vão até os trechos mais próximos dela.",
   },
 
   how: {
@@ -37,18 +36,12 @@ export const pt: Dictionary = {
       dims: "números descrevem cada trecho",
       servers: "servidores para indexar e buscar: roda no seu navegador",
     },
-    figure: {
-      note: "Uma execução real no contrato de exemplo, calculada pelo mesmo código do laboratório.",
-      dense: "Pelo sentido",
-      sparse: "Pelas palavras",
-      fused: "Juntas",
-      found: "contém a resposta",
-    },
+    figure: "O pipeline, etapa por etapa",
   },
 
   principles: {
     eyebrow: "Feito para ser inspecionado",
-    headline: "Nada se move sem ter sido calculado",
+    headline: "Nada se move sem ter sido computado",
     body: "Cada execução deixa um registro das suas etapas. O laboratório o reproduz: toque, pause, volte um passo, mude uma configuração e veja o que mais muda.",
     items: [
       { title: "Seus documentos", body: "Solte um PDF ou um arquivo de texto. Ele é lido, dividido e indexado no navegador e nunca é enviado." },
@@ -93,14 +86,14 @@ export const pt: Dictionary = {
       query: { name: "Pergunta", hint: "roda a cada pergunta" },
     },
     by: {
-      code: { tag: "código", hint: "Calculada por uma função pura: a mesma entrada sempre dá a mesma saída." },
+      code: { tag: "código", hint: "Computada por uma função pura: a mesma entrada sempre dá a mesma saída." },
       model: { tag: "modelo", hint: "A única etapa em que o modelo participa." },
     },
     state: {
       skipped: "pulada",
       unused: "não usada neste modo",
     },
-    formula: "O que calcula",
+    formula: "O que computa",
     about: (stage) => `Sobre ${stage}`,
     cached: "do cache",
     cachedHint: "Este texto já tinha embedding: o modelo não rodou de novo.",
@@ -339,8 +332,15 @@ export const pt: Dictionary = {
   },
 
   footer: {
-    by: "por",
-    course: (name, school, term) => `${name}, ${school} ${term}`,
+    project: "Projeto",
+    licence: "Licença MIT",
+    stack: "Stack",
+    author: "Autor",
+    github: "GitHub",
+    linkedin: "LinkedIn",
+    course: "Disciplina",
+    courseName: "Inteligência Artificial",
+    copyright: "© 2026",
   },
 
   notFound: {

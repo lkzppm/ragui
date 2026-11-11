@@ -1,19 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { readPalette } from "./mount";
+import { useEffect, useRef } from "react";
+import { readPalette } from "./palette";
 import { Space } from "./space";
+import { useGpuCanvas } from "./use-gpu-canvas";
 
-const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
-
-const noop = () => {};
-const subscribeNever = () => noop;
-
-function subscribeReducedMotion(listener: () => void) {
-  const query = window.matchMedia(REDUCED_MOTION);
-  query.addEventListener("change", listener);
-  return () => query.removeEventListener("change", listener);
-}
+const loadField = () => import("./mount").then((module) => module.mountField);
 
 /**
  * The landing page's background: a toy embedding space. Passages are
@@ -24,37 +16,7 @@ function subscribeReducedMotion(listener: () => void) {
  * Decorative: `aria-hidden`, and clicks on controls never reach it.
  */
 export function EmbeddingField({ className = "pointer-events-none absolute inset-0 overflow-hidden" }: { className?: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const hasWebGpu = useSyncExternalStore(subscribeNever, () => "gpu" in navigator, () => true);
-  const reducedMotion = useSyncExternalStore(
-    subscribeReducedMotion,
-    () => window.matchMedia(REDUCED_MOTION).matches,
-    () => false,
-  );
-  const [failed, setFailed] = useState(false);
-  const still = !hasWebGpu || reducedMotion || failed;
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || still) return;
-    let dispose: (() => void) | undefined;
-    let cancelled = false;
-    import("./mount").then(({ mountField }) => {
-      if (cancelled) return;
-      dispose = mountField({
-        canvas,
-        onError: (error) => {
-          console.warn("[field] WebGPU failed, drawing a still frame", error);
-          setFailed(true);
-        },
-      });
-    });
-    return () => {
-      cancelled = true;
-      dispose?.();
-    };
-  }, [still]);
-
+  const { canvasRef, still } = useGpuCanvas("field", loadField);
   return (
     <div className={className} aria-hidden>
       {still ? <StillField /> : <canvas ref={canvasRef} className="block h-full w-full" />}
