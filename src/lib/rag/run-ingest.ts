@@ -4,6 +4,7 @@ import { clean } from "./clean";
 import { hash } from "./hash";
 import { project } from "./project";
 import type { Settings } from "./settings";
+import { timed } from "./timing";
 import type { Chunk, Doc, Embedded, Index, IngestTrace, RawDoc, Runtime, Step } from "./types";
 
 export function cacheKey(runtime: Runtime, input: string, kind: "query" | "passage"): string {
@@ -27,35 +28,36 @@ export async function ingest(
     trace.push(step);
     on.step?.(step);
   };
-  let mark = runtime.now();
-  const lap = () => {
-    const now = runtime.now();
-    const ms = now - mark;
-    mark = now;
-    return ms;
-  };
+  // Reading the files happened before this function, wherever they came from; each document says how long it took.
+  push({ kind: "load", docs: raw.map((doc) => ({ id: hash(doc.text), name: doc.name, chars: doc.text.length })), ms: raw.reduce((sum, doc) => sum + (doc.ms ?? 0), 0) });
 
-  push({ kind: "load", docs: raw.map((doc) => ({ id: hash(doc.text), name: doc.name, chars: doc.text.length })), ms: lap() });
+  const cleaned = timed(runtime, () =>
+    raw.map((doc): Doc => {
+      const text = clean(doc.text);
+      return { id: hash(text), name: doc.name, type: doc.type, text, rawChars: doc.text.length };
+    }),
+  );
+  const docs = cleaned.value;
+  push({ kind: "clean", before: raw.reduce((sum, doc) => sum + doc.text.length, 0), after: docs.reduce((sum, doc) => sum + doc.text.length, 0), ms: cleaned.ms });
 
-  const docs: Doc[] = raw.map((doc) => {
-    const text = clean(doc.text);
-    return { id: hash(text), name: doc.name, type: doc.type, text, rawChars: doc.text.length };
+  const cut = timed(runtime, () => {
+    const perDoc: number[] = [];
+    const chunks: Chunk[] = [];
+    for (const doc of docs) {
+      const pieces = chunk(doc, settings.chunk);
+      perDoc.push(pieces.length);
+      for (const piece of pieces) chunks.push({ ...piece, index: chunks.length });
+    }
+    return { perDoc, chunks };
   });
-  push({ kind: "clean", before: raw.reduce((sum, doc) => sum + doc.text.length, 0), after: docs.reduce((sum, doc) => sum + doc.text.length, 0), ms: lap() });
-
-  const perDoc: number[] = [];
-  const chunks: Chunk[] = [];
-  for (const doc of docs) {
-    const cut = chunk(doc, settings.chunk);
-    perDoc.push(cut.length);
-    for (const piece of cut) chunks.push({ ...piece, index: chunks.length });
-  }
-  push({ kind: "chunk", strategy: settings.chunk.strategy, size: settings.chunk.size, overlap: settings.chunk.overlap, count: chunks.length, perDoc, ms: lap() });
+  const { perDoc, chunks } = cut.value;
+  push({ kind: "chunk", strategy: settings.chunk.strategy, size: settings.chunk.size, overlap: settings.chunk.overlap, count: chunks.length, perDoc, ms: cut.ms });
 
   // Only texts never embedded with this model are sent to it.
   const inputs = chunks.map(chunkInput);
   const keys = inputs.map((input) => cacheKey(runtime, input, "passage"));
   const missing = [...new Set(keys.filter((key) => !runtime.cache.has(key)))];
+  const embedStarted = runtime.now();
   if (missing.length) {
     const texts = missing.map((key) => inputs[keys.indexOf(key)]);
     const fresh = await runtime.embedder.embed(texts, "passage", on.embed);
@@ -73,11 +75,11 @@ export async function ingest(
     tokens += embedded.tokens;
     if (embedded.truncated) truncated++;
   });
-  push({ kind: "embed", model: runtime.embedder.model, embedded: missing.length, cached: chunks.length - missing.length, tokens, truncated, ms: lap() });
+  push({ kind: "embed", model: runtime.embedder.model, embedded: missing.length, cached: chunks.length - missing.length, tokens, truncated, ms: runtime.now() - embedStarted });
 
-  const sparse = buildSparseIndex(inputs);
-  const projection = project(vectors, dims);
-  push({ kind: "index", chunks: chunks.length, dims, terms: sparse.df.size, ms: lap() });
+  const built = timed(runtime, () => ({ sparse: buildSparseIndex(inputs), projection: project(vectors, dims) }));
+  const { sparse, projection } = built.value;
+  push({ kind: "index", chunks: chunks.length, dims, terms: sparse.df.size, ms: built.ms });
 
   return { index: { docs, chunks, model: runtime.embedder.model, vectors, sparse, projection }, trace };
 }
