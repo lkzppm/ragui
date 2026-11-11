@@ -45,6 +45,7 @@ jobs:
           pnpm exec vgpu check src/components/field/field.wgsl > /dev/null
           pnpm exec vgpu check src/components/field/points.wgsl > /dev/null
           pnpm exec vgpu check src/components/field/links.wgsl > /dev/null
+          pnpm exec vgpu check src/components/field/cells.wgsl > /dev/null
 
       - name: Build
         run: pnpm build

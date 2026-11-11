@@ -2,7 +2,7 @@
 
 import { ArrowRight, ChevronDown, FileText, ListChecks, PackageCheck, Split, Zap } from "lucide-react";
 import Link from "next/link";
-import { siHuggingface, siNextdotjs, siTypescript, siWebgpu } from "simple-icons";
+import { CellField } from "@/components/field/cells-canvas";
 import { EmbeddingField } from "@/components/field/field-canvas";
 import { useT } from "@/i18n/LocaleProvider";
 import { BRAND } from "@/lib/brand";
@@ -13,17 +13,10 @@ import { STAGES, usesModel } from "@/lib/rag/stages";
 import { cn } from "@/lib/utils";
 import { BrandIcon } from "./brand-icon";
 import { Footer } from "./footer";
-import { HomeFigure } from "./home-figure";
+import { HomePipeline } from "./home-pipeline";
 import { Mark } from "./logo";
 import { Reveal } from "./reveal";
-
-const STACK = [
-  { icon: siNextdotjs, label: "Next.js", href: "https://nextjs.org" },
-  { icon: siTypescript, label: "TypeScript", href: "https://www.typescriptlang.org" },
-  { icon: siHuggingface, label: "Transformers.js", href: "https://huggingface.co/docs/transformers.js" },
-  { icon: siWebgpu, label: "WebGPU · vgpu", href: "https://vgpu.sh" },
-  { icon: null, label: "Groq", href: "https://groq.com" },
-];
+import { STACK } from "./stack";
 
 const PRINCIPLE_ICONS = [FileText, Split, PackageCheck, ListChecks];
 
@@ -31,9 +24,9 @@ const BUTTON = "press inline-flex h-11 items-center gap-2 rounded-full px-5 text
 
 /**
  * The landing page, three screens, each on its own ground: the name over a
- * live toy of what the app does; how it works, beside real runs of it; and
- * what makes it worth opening, with the way in. Every number here is read
- * from the pipeline's own definitions.
+ * live toy of what the app does; how it works, beside the pipeline explained
+ * stage by stage; and what makes it worth opening, with the way in. Every
+ * number here is read from the pipeline's own definitions.
  */
 export function Home() {
   const t = useT();
@@ -60,7 +53,7 @@ export function Home() {
           <div className="relative mx-auto flex w-full max-w-7xl flex-1 items-center px-4 py-16 sm:px-6">
             <div className="max-w-xl">
               <p className="eyebrow animate-[rise_0.7s_var(--ease)_0.05s_backwards]">{t.hero.eyebrow}</p>
-              <h1 className="display mt-5 flex animate-[rise_0.8s_var(--ease)_0.12s_backwards] items-center gap-4 text-7xl font-semibold sm:text-8xl">
+              <h1 className="mark-host display mt-5 flex w-fit animate-[rise_0.8s_var(--ease)_0.12s_backwards] items-center gap-4 text-7xl font-semibold sm:text-8xl">
                 <Mark className="size-[0.72em]" />
                 <span>
                   {head}
@@ -96,16 +89,15 @@ export function Home() {
               </ul>
             </div>
           </div>
-          <div className="relative mx-auto flex w-full max-w-7xl items-end justify-between gap-6 px-4 pb-6 sm:px-6">
-            <a href="#how" className="group flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
+          <div className="relative mx-auto w-full max-w-7xl px-4 pb-6 sm:px-6">
+            <a href="#how" className="group flex w-fit items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground">
               {t.hero.discover}
               <ChevronDown className="size-4 animate-[nudge_1.8s_var(--ease)_infinite]" aria-hidden />
             </a>
-            <p className="hidden max-w-[17rem] text-right text-xs leading-relaxed text-muted-foreground [text-shadow:0_0_12px_var(--background)] md:block">{t.hero.field}</p>
           </div>
         </section>
 
-        {/* How it works, on a plain tint: the words and the facts on the left, real runs on the right. */}
+        {/* How it works, on a plain tint: the words and the facts on the left, the pipeline stage by stage on the right. */}
         <section id="how" className="relative flex min-h-[calc(100svh-var(--nav-h))] scroll-mt-14 items-center border-b border-border bg-[var(--tint)]">
           <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div>
@@ -126,18 +118,15 @@ export function Home() {
               </dl>
             </div>
             <Reveal delay={0.2}>
-              <HomeFigure />
+              <HomePipeline />
             </Reveal>
           </div>
         </section>
 
         {/* What it is for, and the way in. */}
         <section className="relative flex min-h-[calc(100svh-var(--nav-h))] items-center overflow-hidden">
-          {/* A page of cells, like a vector laid flat, fading toward the edges. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 [background-image:radial-gradient(var(--border)_1px,transparent_1px)] [background-size:18px_18px] [mask-image:radial-gradient(ellipse_at_center,black_10%,transparent_72%)]"
-          />
+          {/* A page of cells, like a vector laid flat: each one lit by how close it is to a question that moves. */}
+          <CellField />
           <div className="relative mx-auto w-full max-w-7xl px-4 py-24 sm:px-6">
             <Reveal className="mx-auto max-w-3xl text-center">
               <p className="eyebrow">{t.principles.eyebrow}</p>
