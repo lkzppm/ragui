@@ -163,7 +163,7 @@ function Column({
               >
                 <div className="flex items-baseline gap-1.5 text-xs">
                   <span className="num w-3 shrink-0 text-muted-foreground">{row.rank}</span>
-                  <span className={cn("min-w-0 flex-1 truncate font-medium", row.state === "dropped" && "line-through decoration-flag/60")} lang="pt-BR" title={chunk.title ?? chunk.text.slice(0, 80)}>
+                  <span className={cn("min-w-0 flex-1 truncate font-medium", row.state === "dropped" && "line-through decoration-flag/60")} title={chunk.title ?? chunk.text.slice(0, 80)}>
                     {chunk.title ?? chunk.text.slice(0, 40)}
                   </span>
                   <AnimatePresence>

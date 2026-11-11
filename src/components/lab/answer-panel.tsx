@@ -95,7 +95,7 @@ export function AnswerPanel({ className }: { className?: string }) {
 
       <div className="fade-y scrollbar-none flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-4 pt-2 pb-8">
         {question && (
-          <p className="text-sm font-medium text-balance" lang="pt-BR">
+          <p className="text-sm font-medium text-balance">
             {question}
           </p>
         )}
@@ -116,7 +116,7 @@ export function AnswerPanel({ className }: { className?: string }) {
             </motion.div>
           ) : showText ? (
             <motion.div key="text" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={SPRING} className="flex flex-col gap-3">
-              <p className={cn("text-[0.9375rem] leading-7 whitespace-pre-wrap transition-opacity duration-300", answer.status === "stale" && "opacity-45")} lang="pt-BR">
+              <p className={cn("text-[0.9375rem] leading-7 whitespace-pre-wrap transition-opacity duration-300", answer.status === "stale" && "opacity-45")}>
                 <Cited text={answer.text} sources={sources} valid={(n) => known.has(n)} />
                 {answer.status === "streaming" && <span className="ml-0.5 inline-block h-4 w-[2px] animate-[breathe_1s_ease-in-out_infinite] bg-query align-middle" />}
               </p>
@@ -182,10 +182,10 @@ export function AnswerPanel({ className }: { className?: string }) {
                     <li key={source.n} onPointerEnter={() => hover(source.chunks[0])} className={cn("rounded-lg border px-2.5 py-2 transition-colors duration-200", lit ? "border-query/60 bg-query/[0.07]" : "border-border")}>
                       <div className="flex items-baseline gap-2 text-xs">
                         <span className="num rounded bg-query px-1 font-medium text-query-foreground">{source.n}</span>
-                        <span className="min-w-0 flex-1 truncate font-medium" lang="pt-BR">{source.title ?? ""}</span>
+                        <span className="min-w-0 flex-1 truncate font-medium">{source.title ?? ""}</span>
                         <span className="num text-[0.6875rem] text-muted-foreground">{source.tokens}</span>
                       </div>
-                      <p className={cn("mt-1 text-xs leading-relaxed text-muted-foreground", !lit && "line-clamp-2")} lang="pt-BR">
+                      <p className={cn("mt-1 text-xs leading-relaxed text-muted-foreground", !lit && "line-clamp-2")}>
                         {source.text.replace(/\s+/g, " ")}
                       </p>
                     </li>
